@@ -1,0 +1,47 @@
+# Ignore vendor directory
+vendor/
+
+# Ignore Composer files
+composer.lock
+
+# Ignore system files
+.DS_Store
+Thumbs.db
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Cache
+.cache/
+*.cache
+
+# PHPStorm
+.phpunit.result.cache
+
+# Database files
+.db
+*.sqlite
+*.sqlite3
+
+# Build / export folders
+dist/
+build/
+
+# Logs
+logs/
+*.log
+error_log
+
+# Local environment files
+.env
+.env.local
+.env.*.local
+/local/
+
+# Secret or config backups
+*.env.backup
+*.key
+
