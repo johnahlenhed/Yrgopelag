@@ -2,6 +2,10 @@
 
 declare(strict_types=1);
 
-require __DIR__ . '/vendor/autoload.php';
+require_once __DIR__ . '/includes/header.php'; ?>
 
-echo "Autoload OK";
+<main>
+    <p>Welcome to Hotel Borta bra, hemma bäst!</p>
+</main>
+
+<?php require_once __DIR__ . '/includes/footer.php'; ?>
