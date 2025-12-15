@@ -49,3 +49,15 @@ nav {
 nav img {
     height: 8rem;
 }
+
+footer {
+    background-color: var(--accent-color);
+    color: var(--font-color);
+    text-align: center;
+
+}
+
+footer img {
+    height: 6rem;
+    margin-top: 1rem;
+}
