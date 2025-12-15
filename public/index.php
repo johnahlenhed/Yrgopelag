@@ -2,27 +2,27 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/includes/header.php'; ?>
+require_once __DIR__ . '/../includes/header.php'; ?>
 
 <main>
     <p>Welcome to Hotel Borta bra, hemma bäst!</p>
 
     <section>
-        <form method="POST" action="/book">
+        <form method="POST" action="/public/book.php" class="booking-form">
 
             <fieldset>
-                <label for="economy">Economy</label>
-                <input type="date" id="economy" name="checkin" min="2026-01-01" max="2026-01-31">
+                <label for="economy_checkin">Economy</label>
+                <input type="date" id="economy_checkin" name="economy_checkin" min="2026-01-01" max="2026-01-31">
             </fieldset>
 
             <fieldset class="standard-room">
-                <label for="standard">Standard</label>
-                <input type="date" id="standard" name="checkin" min="2026-01-01" max="2026-01-31">
+                <label for="standard_checkin">Standard</label>
+                <input type="date" id="standard_checkin" name="standard_checkin" min="2026-01-01" max="2026-01-31">
             </fieldset>
 
             <fieldset class="luxury-room">
-                <label for="luxury">Luxury</label>
-                <input type="date" id="luxury" name="checkin" min="2026-01-01" max="2026-01-31">
+                <label for="luxury_checkin">Luxury</label>
+                <input type="date" id="luxury_checkin" name="luxury_checkin" min="2026-01-01" max="2026-01-31">
             </fieldset>
 
             <fieldset>
@@ -54,15 +54,15 @@ require_once __DIR__ . '/includes/header.php'; ?>
 
     <section class="room-info-container">
         <article>
-        <img src="/images/economy-room.png" alt="Economy Room">
+        <img src="/public/images/economy-room.png" alt="Economy Room">
         </article>
         <article>
-        <img src="/images/standard-room.png" alt="Standard Room">
+        <img src="/public/images/standard-room.png" alt="Standard Room">
         </article>
         <article>
-        <img src="/images/luxury-room.png" alt="Luxury Room">
+        <img src="/public/images/luxury-room.png" alt="Luxury Room">
         </article>
     </section>
 </main>
 
-<?php require_once __DIR__ . '/includes/footer.php'; ?>
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>
