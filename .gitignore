@@ -25,6 +25,7 @@ Thumbs.db
 .db
 *.sqlite
 *.sqlite3
+/database/*.sqlite
 
 # Build / export folders
 dist/
