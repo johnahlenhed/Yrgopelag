@@ -40,10 +40,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-?>
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_POST['economy_price'], $_POST['standard_price'], $_POST['luxury_price'])) {
+        try {
+            $stmt = $pdo->prepare('UPDATE rooms SET price = :price WHERE type = :type');
+
+            $stmt->execute([
+                ':price' => $data['economy_price'],
+                ':type' => 'economy'
+            ]);
+
+            $stmt->execute([
+                ':price' => $data['standard_price'],
+                ':type' => 'standard'
+            ]);
+
+            $stmt->execute([
+                ':price' => $data['luxury_price'],
+                ':type' => 'luxury'
+            ]);
+
+            echo 'Room prices updated successfully.';
+        } catch (PDOException $e) {
+            echo 'Error updating room prices: ' . htmlspecialchars($e->getMessage());
+        }
+    }
+}
 
 
-<?php
 require __DIR__ . '/../../includes/header.php';
 ?>
 
