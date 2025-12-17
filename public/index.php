@@ -41,10 +41,10 @@ require_once __DIR__ . '/../includes/header.php'; ?>
             <fieldset>
                 <legend>Features</legend>
                 <label>
-                    <input type="checkbox" name="">
-                    <input type="checkbox" name="">
-                    <input type="checkbox" name="">
-                    <input type="checkbox" name="">
+                    <input type="checkbox" name="feature1">feature1</input>
+                    <input type="checkbox" name="feature2">feature2</input>
+                    <input type="checkbox" name="feature3">feature3</input>
+                    <input type="checkbox" name="feature4">feature4</input>
                 </label>
             </fieldset>
 
