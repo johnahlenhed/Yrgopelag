@@ -13,7 +13,7 @@
 
     <header>
         <nav>
-            <img src="/public/images/borta-bra-logo.png" alt="Hotel Logo" />
+            <a href="/public/index.php"><img src="/public/images/borta-bra-logo.png" alt="Hotel Logo" /></a>
             <a href="/public/admin/login.php">Login</a>
         </nav>
     </header>

@@ -4,6 +4,12 @@ declare(strict_types=1);
 
 session_start();
 
+// Force logout & session reset when visiting login page
+session_unset();        // Clear session variables
+session_destroy();     // Destroy session data
+session_regenerate_id(true); // Prevent session fixation
+session_start();       // Start a fresh session
+
 require_once __DIR__ . '/../../config/config.php';
 
 if (!empty($_SESSION['is_admin'])) {
@@ -17,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($password === ($_ENV['ADMIN_PASSWORD'] ?? '')) {
         $_SESSION['is_admin'] = true;
-        header('Location: /admin/dashboard.php');
+        header('Location: /public/admin/dashboard.php');
         exit();
     }
 
