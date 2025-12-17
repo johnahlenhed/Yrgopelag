@@ -6,19 +6,22 @@ session_start();
 
 require_once __DIR__ . '/../../config/config.php';
 
+if (!empty($_SESSION['is_admin'])) {
+    header('Location: /public/admin/dashboard.php');
+    exit();
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    require_once __DIR__ . '/../../src/adminHandler.php';
-    handleAdminUpdate($_POST);
 
     $password = $_POST['password'] ?? '';
 
-    if (password_verify($password, $_ENV['ADMIN_PASSWORD_HASH'] ?? '')) {
+    if ($password === ($_ENV['ADMIN_PASSWORD'] ?? '')) {
         $_SESSION['is_admin'] = true;
         header('Location: /admin/dashboard.php');
         exit();
-    } else {
-        $error = 'Invalid password.';
     }
+
+        $error = 'Invalid password.';
 }
 
 require __DIR__ . '/../../includes/header.php'; ?>

@@ -12,16 +12,17 @@ $dotenv->load();
 error_reporting(E_ALL);
 ini_set('display_errors', '1');
 
-$dsn = $_ENV['DB_DSN'] ?? '';
-$username = $_ENV['DB_USERNAME'] ?? '';
+// Database connection settings
+$dsn = 'sqlite:' . __DIR__ . '/../database/hotel.sqlite';
+$user = $_ENV['DB_USER'] ?? '';
 $password = $_ENV['DB_PASSWORD'] ?? '';
 
 
 try {
-    $pdo = new PDO($dsn, $username, $password, [
+    $pdo = new PDO($dsn, $user, $password, [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
     ]);
 } catch (PDOException $e) {
-    die('Database connection failed');
+    die('Database connection failed: ' . $e->getMessage());
 }

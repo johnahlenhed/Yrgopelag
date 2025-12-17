@@ -6,4 +6,6 @@ function handleAdminUpdate(array $data): void
 {
     // Placeholder function to handle admin updates
     // Implement the logic to update settings based on $data
+
+    
 }
