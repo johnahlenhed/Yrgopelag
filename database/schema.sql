@@ -12,7 +12,7 @@ INSERT INTO rooms (type, price) VALUES
 ('luxury', 10);
 
 CREATE TABLE bookings (
-    id INTEGER PRIMARY KEY,
+    id INTEGER AUTOINCREMENT PRIMARY KEY,
     guest_name TEXT NOT NULL,
     room_type TEXT NOT NULL,
     arrival_date TEXT NOT NULL,

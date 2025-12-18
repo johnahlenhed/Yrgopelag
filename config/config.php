@@ -17,7 +17,6 @@ if (($_ENV['APP_ENV'] ?? 'production') === 'development') {
 // Database connection settings
 $dsn = 'sqlite:' . __DIR__ . '/../database/hotel.sqlite';
 
-
 try {
     $pdo = new PDO($dsn);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);

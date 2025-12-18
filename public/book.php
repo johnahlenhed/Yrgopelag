@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../src/bookingValidation.php';
+require_once __DIR__ . '/../src/bookingRepository.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
@@ -25,6 +27,22 @@ $selectedRooms = array_filter([
     'luxury' => $data['luxury_checkin'],
 ]);
 
+$checkinTime = new DateTime('15:00');
+$arrival = new DateTime($data[array_key_first($selectedRooms) . '_checkin'] . ' ' . $checkinTime->format('H:i'));
+$departure = (clone $arrival)->modify('+8 hours');
+
+$roomType = array_key_first($selectedRooms);
+
+// For demonstration, we use a fixed price. In a real application, fetch the price from the database.
+$price = 10;
+
+bookingRepository::save(
+    $pdo, 
+    $data, 
+    $roomType,
+    $price
+);
+
 if (count($selectedRooms) != 1) {
     exit('Please select only one room to book.');
 }
@@ -40,3 +58,16 @@ if (!empty($errors)) {
 }
 
 var_dump($data);
+var_dump($selectedRooms); ?>
+
+<?php require __DIR__ . '/../includes/header.php'; ?>
+
+<section>
+    <h1>Booking Confirmation</h1>
+    <p>Your booking has been received. We hope you enjoy your stay.</p>
+
+    <h3>Make sure you visit our bar "Bolaget".</h3>
+</section>
+
+
+<?php require __DIR__ . '/../includes/footer.php'; ?>
