@@ -2,7 +2,10 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../src/bookingValidation.php';
+require_once __DIR__ . '/../src/bookingRepository.php';
+require_once __DIR__ . '/../src/featureRepository.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
@@ -29,7 +32,46 @@ if (count($selectedRooms) != 1) {
     exit('Please select only one room to book.');
 }
 
+$checkinTime = new DateTime('15:00');
+$arrival = new DateTime($data[array_key_first($selectedRooms) . '_checkin'] . ' ' . $checkinTime->format('H:i'));
+$departure = (clone $arrival)->modify('+20 hours');
+
+
+
 $errors = bookingValidation::validateBookingData($data);
+if ($errors) {
+    http_response_code(400);
+    foreach ($errors as $error) {
+        echo htmlspecialchars($error) . '<br>';
+    }
+    exit;
+}
+
+$roomType = array_key_first($selectedRooms);
+
+// Validate and fetch features
+$features = $_POST['features'] ?? [];
+
+$featureRows = featureRepository::getByNames($pdo, $features);
+
+bookingValidation::validateFeatures($featureRows, $roomType);
+
+// For demonstration, we use a fixed price. In a real application, fetch the price from the database.
+$price = 10;
+
+$bookingId = BookingRepository::create(
+    $pdo,
+    $guestName = $data['name'],
+    $roomType,
+    $arrival,
+    $departure,
+    $totalPrice = $price
+);
+
+// Attach features to booking
+$featureIds = array_column($featureRows, 'id');
+FeatureRepository::attachToBooking($pdo, $bookingId, $featureIds);
+
 
 if (!empty($errors)) {
     http_response_code(400);
@@ -39,4 +81,24 @@ if (!empty($errors)) {
     exit;
 }
 
-var_dump($data);
+
+var_dump($features);
+
+var_dump($featureRows);
+
+var_dump($bookingId);
+
+var_dump($featureIds);
+?>
+
+<?php require __DIR__ . '/../includes/header.php'; ?>
+
+<section>
+    <h1>Booking Confirmation</h1>
+    <p>Your booking has been received. We hope you enjoy your stay.</p>
+
+    <h3>Make sure you visit our bar "Bolaget".</h3>
+</section>
+
+
+<?php require __DIR__ . '/../includes/footer.php'; ?>

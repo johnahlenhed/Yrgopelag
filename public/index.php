@@ -40,11 +40,33 @@ require_once __DIR__ . '/../includes/header.php'; ?>
 
             <fieldset>
                 <legend>Features</legend>
+                <h5>Water:</h5>
                 <label>
-                    <input type="checkbox" name="">
-                    <input type="checkbox" name="">
-                    <input type="checkbox" name="">
-                    <input type="checkbox" name="">
+                    <input type="checkbox" name="features[]" value="pool">Pool (Economy)</input>
+                    <input type="checkbox" name="features[]" value="scuba_diving">Scuba Diving (Basic)</input>
+                    <input type="checkbox" name="features[]" value="olympic_pool">Olympic Pool (Premium)</input>
+                    <input type="checkbox" name="features[]" value="waterpark">Waterpark with Fire and Minibar (Superior)</input>
+                </label>
+                <h5>Games:</h5>
+                <label>
+                    <input type="checkbox" name="features[]" value="yahtzee">Yahtzee (Economy)</input>
+                    <input type="checkbox" name="features[]" value="ping_pong_table">Ping Pong Table (Basic)</input>
+                    <input type="checkbox" name="features[]" value="ps5">PS5 (Premium)</input>
+                    <input type="checkbox" name="features[]" value="casino">Casino (Superior)</input>
+                </label>
+                <h5>Wheels:</h5>
+                <label>
+                    <input type="checkbox" name="features[]" value="unicycle">Unicycle (Economy)</input>
+                    <input type="checkbox" name="features[]" value="bicycle">Bicycle (Basic)</input>
+                    <input type="checkbox" name="features[]" value="trike">Trike (Premium)</input>
+                    <input type="checkbox" name="features[]" value="four_wheeled_motorized_beast">Four-Wheeled Motorized Beast (Superior)</input>
+                </label>
+                <h5>Hotel-Specific:</h5>
+                <label>
+                    <input type="checkbox" name="features[]" value="svenskt_kaffe_on_arrival">Svenskt kaffe on arrival (Economy)</input>
+                    <input type="checkbox" name="features[]" value="smörgåsbord_lunch">Smörgåsbord lunch (Basic)</input>
+                    <input type="checkbox" name="features[]" value="kräftskiva">Kräftskiva (Premium)</input>
+                    <input type="checkbox" name="features[]" value="Jan-Emanuel_sköter_din_deklaration">Jan-Emanuel sköter din deklaration (Superior)</input>
                 </label>
             </fieldset>
 

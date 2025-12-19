@@ -11,6 +11,63 @@ if (!isset($_SESSION['is_admin']) || $_SESSION['is_admin'] !== true) {
     exit();
 }
 
+$data = [
+    'stars' => $_POST['stars'] ?? null,
+    'discounts' => $_POST['discounts'] ?? null,
+    'economy_price' => $_POST['economy_price'] ?? null,
+    'standard_price' => $_POST['standard_price'] ?? null,
+    'luxury_price' => $_POST['luxury_price'] ?? null,
+];
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_POST['stars'], $_POST['discounts'])) {
+        try {
+            $stmt = $pdo->prepare('UPDATE settings SET value = :stars WHERE key = :key'); 
+            $stmt->execute([
+                ':stars' => $data['stars'],
+                'key' => 'star_rating'
+            ]);
+
+            $stmt = $pdo->prepare('UPDATE settings SET value = :discounts WHERE key = :key');
+            $stmt->execute([
+                ':discounts' => $data['discounts'],
+                'key' => 'loyalty_discount'
+            ]);
+            echo 'Hotel info updated successfully.';
+        } catch (PDOException $e) {
+            echo 'Error updating hotel info: ' . htmlspecialchars($e->getMessage());
+        }
+    }
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_POST['economy_price'], $_POST['standard_price'], $_POST['luxury_price'])) {
+        try {
+            $stmt = $pdo->prepare('UPDATE rooms SET price = :price WHERE type = :type');
+
+            $stmt->execute([
+                ':price' => $data['economy_price'],
+                ':type' => 'economy'
+            ]);
+
+            $stmt->execute([
+                ':price' => $data['standard_price'],
+                ':type' => 'standard'
+            ]);
+
+            $stmt->execute([
+                ':price' => $data['luxury_price'],
+                ':type' => 'luxury'
+            ]);
+
+            echo 'Room prices updated successfully.';
+        } catch (PDOException $e) {
+            echo 'Error updating room prices: ' . htmlspecialchars($e->getMessage());
+        }
+    }
+}
+
+
 require __DIR__ . '/../../includes/header.php';
 ?>
 
@@ -54,9 +111,15 @@ require __DIR__ . '/../../includes/header.php';
             Luxury
             <input type="number" name="luxury_price">
         </label>
+
+        <button type="submit">Update Prices</button>
     </form>
 </section>
 
 <?php 
 require __DIR__ . '/../../includes/footer.php';
+?>
+
+<?php
+var_dump($data);
 ?>
