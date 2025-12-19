@@ -63,10 +63,10 @@ require_once __DIR__ . '/../includes/header.php'; ?>
                 </label>
                 <h5>Hotel-Specific:</h5>
                 <label>
-                    <input type="checkbox" name="features[]" value="custom_1">custom-1 (Economy)</input>
-                    <input type="checkbox" name="features[]" value="custom_2">custom-2 (Basic)</input>
-                    <input type="checkbox" name="features[]" value="custom_3">custom-3 (Premium)</input>
-                    <input type="checkbox" name="features[]" value="custom_4">custom-4 (Superior)</input>
+                    <input type="checkbox" name="features[]" value="svenskt_kaffe_on_arrival">Svenskt kaffe on arrival (Economy)</input>
+                    <input type="checkbox" name="features[]" value="smörgåsbord_lunch">Smörgåsbord lunch (Basic)</input>
+                    <input type="checkbox" name="features[]" value="kräftskiva">Kräftskiva (Premium)</input>
+                    <input type="checkbox" name="features[]" value="Jan-Emanuel_sköter_din_deklaration">Jan-Emanuel sköter din deklaration (Superior)</input>
                 </label>
             </fieldset>
 

@@ -34,7 +34,7 @@ if (count($selectedRooms) != 1) {
 
 $checkinTime = new DateTime('15:00');
 $arrival = new DateTime($data[array_key_first($selectedRooms) . '_checkin'] . ' ' . $checkinTime->format('H:i'));
-$departure = (clone $arrival)->modify('+8 hours');
+$departure = (clone $arrival)->modify('+20 hours');
 
 
 
@@ -49,6 +49,7 @@ if ($errors) {
 
 $roomType = array_key_first($selectedRooms);
 
+// Validate and fetch features
 $features = $_POST['features'] ?? [];
 
 $featureRows = featureRepository::getByNames($pdo, $features);
@@ -67,7 +68,7 @@ $bookingId = BookingRepository::create(
     $totalPrice = $price
 );
 
-
+// Attach features to booking
 $featureIds = array_column($featureRows, 'id');
 FeatureRepository::attachToBooking($pdo, $bookingId, $featureIds);
 
@@ -82,6 +83,12 @@ if (!empty($errors)) {
 
 
 var_dump($features);
+
+var_dump($featureRows);
+
+var_dump($bookingId);
+
+var_dump($featureIds);
 ?>
 
 <?php require __DIR__ . '/../includes/header.php'; ?>
