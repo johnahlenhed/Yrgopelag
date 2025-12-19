@@ -35,11 +35,20 @@ final class featureRepository
     }
 
     // Fetch active features for booking page
-    public static function getAllActiveFeatures(PDO $pdo): array
+    public static function getActiveFeaturesByCategory(PDO $pdo): array
     {
-        $stmt = $pdo->query('SELECT * FROM features WHERE is_active = 1 ORDER BY category, tier');
-        return $stmt->fetchAll();
+        $stmt = $pdo->query(
+            'SELECT * FROM features WHERE is_active = 1 ORDER BY category, tier'
+        );
+        $features = $stmt->fetchAll();
+
+        $groupedFeatures = [];
+        foreach ($features as $feature) {
+            $groupedFeatures[$feature['category']][] = $feature;
+        }
+        return $groupedFeatures;
     }
+    
 
     // Admin
     public static function getAllFeatures(PDO $pdo): array

@@ -6,7 +6,12 @@ require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../src/featureRepository.php';
 require_once __DIR__ . '/../src/roomRepository.php';
 
-$activeFeatures = featureRepository::getAllActiveFeatures($pdo);
+$activeFeatures = featureRepository::getActiveFeaturesByCategory($pdo);
+
+$waterFeatures = $activeFeatures['water'] ?? [];
+$wheelsFeatures = $activeFeatures['wheels'] ?? [];
+$gamesFeatures = $activeFeatures['games'] ?? [];
+$hotelSpecificFeatures = $activeFeatures['hotel-specific'] ?? [];
 
 require __DIR__ . '/../includes/header.php'; ?>
 
@@ -47,30 +52,41 @@ require __DIR__ . '/../includes/header.php'; ?>
             <fieldset>
                 <legend>Features</legend>
                 <h5>Water:</h5>
-                <label>
-
-                </label>
+                <?php foreach ($waterFeatures as $feature): ?>
+                    <label>
+                        <input type="checkbox" name="features[]" value="<?php echo htmlspecialchars($feature['name']); ?>">
+                        <?php echo htmlspecialchars(ucwords(str_replace('_', ' ', $feature['name']))); ?> 
+                        (<?php echo htmlspecialchars(ucfirst($feature['tier'])); ?>)
+                        ($<?php echo($feature['price']); ?>)
+                    </label>
+                <?php endforeach; ?>
                 <h5>Games:</h5>
-                <label>
-                    <input type="checkbox" name="features[]" value="yahtzee">Yahtzee (Economy)</input>
-                    <input type="checkbox" name="features[]" value="ping_pong_table">Ping Pong Table (Basic)</input>
-                    <input type="checkbox" name="features[]" value="ps5">PS5 (Premium)</input>
-                    <input type="checkbox" name="features[]" value="casino">Casino (Superior)</input>
-                </label>
+                <?php foreach ($gamesFeatures as $feature): ?>
+                    <label>
+                        <input type="checkbox" name="features[]" value="<?php echo htmlspecialchars($feature['name']); ?>">
+                        <?php echo htmlspecialchars(ucwords(str_replace('_', ' ', $feature['name']))); ?> 
+                        (<?php echo htmlspecialchars(ucfirst($feature['tier'])); ?>)
+                        ($<?php echo($feature['price']); ?>)
+                    </label>
+                <?php endforeach; ?>
                 <h5>Wheels:</h5>
-                <label>
-                    <input type="checkbox" name="features[]" value="unicycle">Unicycle (Economy)</input>
-                    <input type="checkbox" name="features[]" value="bicycle">Bicycle (Basic)</input>
-                    <input type="checkbox" name="features[]" value="trike">Trike (Premium)</input>
-                    <input type="checkbox" name="features[]" value="four_wheeled_motorized_beast">Four-Wheeled Motorized Beast (Superior)</input>
-                </label>
+                <?php foreach ($wheelsFeatures as $feature): ?>
+                    <label>
+                        <input type="checkbox" name="features[]" value="<?php echo htmlspecialchars($feature['name']); ?>">
+                        <?php echo htmlspecialchars(ucwords(str_replace('_', ' ', $feature['name']))); ?> 
+                        (<?php echo htmlspecialchars(ucfirst($feature['tier'])); ?>)
+                        ($<?php echo($feature['price']); ?>)
+                    </label>
+                <?php endforeach; ?>
                 <h5>Hotel-Specific:</h5>
-                <label>
-                    <input type="checkbox" name="features[]" value="svenskt_kaffe_on_arrival">Svenskt kaffe on arrival (Economy)</input>
-                    <input type="checkbox" name="features[]" value="smörgåsbord_lunch">Smörgåsbord lunch (Basic)</input>
-                    <input type="checkbox" name="features[]" value="kräftskiva">Kräftskiva (Premium)</input>
-                    <input type="checkbox" name="features[]" value="Jan-Emanuel_sköter_din_deklaration">Jan-Emanuel sköter din deklaration (Superior)</input>
-                </label>
+                <?php foreach ($hotelSpecificFeatures as $feature): ?>
+                    <label>
+                        <input type="checkbox" name="features[]" value="<?php echo htmlspecialchars($feature['name']); ?>">
+                        <?php echo htmlspecialchars(ucwords(str_replace('_', ' ', $feature['name']))); ?> 
+                        (<?php echo htmlspecialchars(ucfirst($feature['tier'])); ?>)
+                        ($<?php echo($feature['price']); ?>)
+                    </label>
+                <?php endforeach; ?>
             </fieldset>
 
             <button type="submit">Book Now</button>
