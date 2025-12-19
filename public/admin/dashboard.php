@@ -5,76 +5,128 @@ declare(strict_types=1);
 session_start();
 
 require_once __DIR__ . '/../../config/config.php';
+require_once __DIR__ . '/../../src/featureRepository.php';
 
 if (!isset($_SESSION['is_admin']) || $_SESSION['is_admin'] !== true) {
     header('Location: login.php');
     exit();
 }
 
-$data = [
-    'stars' => $_POST['stars'] ?? null,
-    'discounts' => $_POST['discounts'] ?? null,
-    'economy_price' => $_POST['economy_price'] ?? null,
-    'standard_price' => $_POST['standard_price'] ?? null,
-    'luxury_price' => $_POST['luxury_price'] ?? null,
-];
+$successMessage = '';
+$errorMessage = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (isset($_POST['stars'], $_POST['discounts'])) {
-        try {
-            $stmt = $pdo->prepare('UPDATE settings SET value = :stars WHERE key = :key'); 
-            $stmt->execute([
-                ':stars' => $data['stars'],
-                'key' => 'star_rating'
-            ]);
+    $data = [
+        'stars' => $_POST['stars'] ?? null,
+        'discounts' => $_POST['discounts'] ?? null,
+        'economy_price' => $_POST['economy_price'] ?? null,
+        'standard_price' => $_POST['standard_price'] ?? null,
+        'luxury_price' => $_POST['luxury_price'] ?? null,
+    ];
 
-            $stmt = $pdo->prepare('UPDATE settings SET value = :discounts WHERE key = :key');
-            $stmt->execute([
-                ':discounts' => $data['discounts'],
-                'key' => 'loyalty_discount'
-            ]);
-            echo 'Hotel info updated successfully.';
-        } catch (PDOException $e) {
-            echo 'Error updating hotel info: ' . htmlspecialchars($e->getMessage());
-        }
+    switch ($_POST['action'] ?? null) {
+        case 'update_settings':
+            if (isset($_POST['stars'], $_POST['discounts'])) {
+                try {
+                    $stmt = $pdo->prepare('UPDATE settings SET value = :stars WHERE key = :key');
+                    $stmt->execute([
+                        ':stars' => $data['stars'],
+                        ':key' => 'star_rating'
+                    ]);
+
+                    $stmt = $pdo->prepare('UPDATE settings SET value = :discounts WHERE key = :key');
+                    $stmt->execute([
+                        ':discounts' => $data['discounts'],
+                        ':key' => 'loyalty_discount'
+                    ]);
+                    $successMessage = 'Hotel info updated successfully.';
+                } catch (PDOException $e) {
+                    $errorMessage = 'Error updating hotel info: ' . htmlspecialchars($e->getMessage());
+                }
+            }
+            break;
+
+        case 'update_rooms':
+            if (isset($_POST['economy_price'], $_POST['standard_price'], $_POST['luxury_price'])) {
+                try {
+                    $stmt = $pdo->prepare('UPDATE rooms SET price = :price WHERE type = :type');
+
+                    $stmt->execute([
+                        ':price' => $data['economy_price'],
+                        ':type' => 'economy'
+                    ]);
+
+                    $stmt->execute([
+                        ':price' => $data['standard_price'],
+                        ':type' => 'standard'
+                    ]);
+
+                    $stmt->execute([
+                        ':price' => $data['luxury_price'],
+                        ':type' => 'luxury'
+                    ]);
+
+                    $successMessage = 'Room prices updated successfully.';
+                } catch (PDOException $e) {
+                    $errorMessage = 'Error updating room prices: ' . htmlspecialchars($e->getMessage());
+                }
+            }
+            break;
+
+        case 'update_features':
+            if (isset($_POST['feature_ids']) && is_array($_POST['feature_ids'])) {
+                try {
+                    $featureIds = $_POST['feature_ids'];
+                    $prices = $_POST['prices'] ?? [];
+                    $availabilities = $_POST['availabilities'] ?? [];
+
+                    foreach ($featureIds as $index => $featureId) {
+                        $price = (int)($prices[$index] ?? 0);
+                        $enabled = in_array($featureId, $availabilities);
+
+                        featureRepository::updateFeature($pdo, (int)$featureId, $price, $enabled);
+                    }
+
+                    $successMessage = 'All features updated successfully.';
+                } catch (PDOException $e) {
+                    $errorMessage = 'Error updating features: ' . htmlspecialchars($e->getMessage());
+                }
+            }
+            break;
     }
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (isset($_POST['economy_price'], $_POST['standard_price'], $_POST['luxury_price'])) {
-        try {
-            $stmt = $pdo->prepare('UPDATE rooms SET price = :price WHERE type = :type');
-
-            $stmt->execute([
-                ':price' => $data['economy_price'],
-                ':type' => 'economy'
-            ]);
-
-            $stmt->execute([
-                ':price' => $data['standard_price'],
-                ':type' => 'standard'
-            ]);
-
-            $stmt->execute([
-                ':price' => $data['luxury_price'],
-                ':type' => 'luxury'
-            ]);
-
-            echo 'Room prices updated successfully.';
-        } catch (PDOException $e) {
-            echo 'Error updating room prices: ' . htmlspecialchars($e->getMessage());
-        }
-    }
+try {
+    $features = featureRepository::getAllFeatures($pdo);
+    error_log("Features count: " . count($features));
+    error_log("Features: " . print_r($features, true));
+} catch (Exception $e) {
+    error_log("Error fetching features: " . $e->getMessage());
+    $features = [];
 }
-
 
 require __DIR__ . '/../../includes/header.php';
 ?>
 
 <h1>Admin page</h1>
 
+<?php if ($successMessage): ?>
+    <div class="success-message">
+        <?php echo htmlspecialchars($successMessage); ?>
+    </div>
+<?php endif; ?>
+
+<?php if ($errorMessage): ?>
+    <div class="error-message">
+        <?php echo htmlspecialchars($errorMessage); ?>
+    </div>
+<?php endif; ?>
+
 <section>
+    <h2>Hotel Settings</h2>
     <form method="POST">
+        <input type="hidden" name="action" value="update_settings">
+        
         <label>
             Star rating
             <select name="stars">
@@ -90,15 +142,16 @@ require __DIR__ . '/../../includes/header.php';
             Discounts (%)
             <input type="number" name="discounts" min="0" max="100" step="1">
         </label>
-        
-        <button type="submit">Save</button>
 
+        <button type="submit">Save Settings</button>
     </form>
 </section>
 
 <section>
     <h2>Room Prices</h2>
     <form method="POST">
+        <input type="hidden" name="action" value="update_rooms">
+        
         <label>
             Economy
             <input type="number" name="economy_price">
@@ -116,10 +169,32 @@ require __DIR__ . '/../../includes/header.php';
     </form>
 </section>
 
-<?php 
-require __DIR__ . '/../../includes/footer.php';
-?>
+<section>
+    <h2>Features</h2>
+    <form method="POST">
+        <input type="hidden" name="action" value="update_features">
+        
+        <?php foreach ($features as $feature): ?>
+            <fieldset>
+                <legend><?php echo htmlspecialchars($feature['name']); ?></legend>
+                
+                <input type="hidden" name="feature_ids[]" value="<?php echo ($feature['id']); ?>">
+                
+                <label>
+                    Price
+                    <input type="number" name="prices[]" value="<?php echo ($feature['price']); ?>" min="0">
+                </label>
+                
+                <label>
+                    Enabled
+                    <input type="checkbox" name="availabilities[]" value="<?php echo ($feature['id']); ?>" <?php echo $feature['is_active'] ? 'checked' : ''; ?>>
+                </label>
+            </fieldset>
+        <?php endforeach; ?>
+        
+        <button type="submit">Update All Features</button>
+    </form>
+</section>
 
-<?php
-var_dump($data);
-?>
+
+<?php require __DIR__ . '/../../includes/footer.php'; ?>

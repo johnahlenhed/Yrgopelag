@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 final class featureRepository
 {
+    // Booking
     public static function getByNames(PDO $pdo, array $names): array
     {
         if (empty($names)) {
@@ -31,5 +32,25 @@ final class featureRepository
                 ':feature_id' => $featureId,
             ]);
         }
+    }
+
+    // Admin
+    public static function getAllFeatures(PDO $pdo): array
+    {
+        $stmt = $pdo->query('SELECT * FROM features ORDER BY category, tier');
+        return $stmt->fetchAll();
+    }
+
+    public static function updateFeature(PDO $pdo, int $featureId, int $price, bool $enabled): void
+    {
+        $stmt = $pdo->prepare(
+                'UPDATE features SET price = :price, is_active = :is_active WHERE id = :id'
+            );
+
+        $stmt->execute([
+            ':price' => $price,
+            ':is_active' => $enabled ? 1 : 0,
+            ':id' => $featureId,
+        ]);
     }
 }
