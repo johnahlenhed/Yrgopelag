@@ -2,7 +2,13 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/../includes/header.php'; ?>
+require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/../src/featureRepository.php';
+require_once __DIR__ . '/../src/roomRepository.php';
+
+$activeFeatures = featureRepository::getAllActiveFeatures($pdo);
+
+require __DIR__ . '/../includes/header.php'; ?>
 
 <main>
     <p>Welcome to Hotel Borta bra, hemma bäst!</p>
@@ -42,10 +48,7 @@ require_once __DIR__ . '/../includes/header.php'; ?>
                 <legend>Features</legend>
                 <h5>Water:</h5>
                 <label>
-                    <input type="checkbox" name="features[]" value="pool">Pool (Economy)</input>
-                    <input type="checkbox" name="features[]" value="scuba_diving">Scuba Diving (Basic)</input>
-                    <input type="checkbox" name="features[]" value="olympic_pool">Olympic Pool (Premium)</input>
-                    <input type="checkbox" name="features[]" value="waterpark">Waterpark with Fire and Minibar (Superior)</input>
+
                 </label>
                 <h5>Games:</h5>
                 <label>
@@ -87,4 +90,4 @@ require_once __DIR__ . '/../includes/header.php'; ?>
     </section>
 </main>
 
-<?php require_once __DIR__ . '/../includes/footer.php'; ?>
+<?php require __DIR__ . '/../includes/footer.php'; ?>
