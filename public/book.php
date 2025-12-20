@@ -54,8 +54,6 @@ $features = $_POST['features'] ?? [];
 
 $featureRows = featureRepository::getByNames($pdo, $features);
 
-bookingValidation::validateFeatures($featureRows, $roomType);
-
 // For demonstration, we use a fixed price. In a real application, fetch the price from the database.
 $price = 10;
 
