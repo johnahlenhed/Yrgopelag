@@ -19,4 +19,12 @@ final class roomRepository
     }
         return $prices;
     }
+
+    public static function getRoomPriceByType(PDO $pdo, string $type): ?int
+    {
+        $stmt = $pdo->prepare('SELECT price FROM rooms WHERE type = :type');
+        $stmt->execute([':type' => $type]);
+        $price = $stmt->fetchColumn();
+        return $price !== false ? (int)$price : null;
+    }
 }

@@ -6,6 +6,7 @@ require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../src/bookingValidation.php';
 require_once __DIR__ . '/../src/bookingRepository.php';
 require_once __DIR__ . '/../src/featureRepository.php';
+require_once __DIR__ . '/../src/roomRepository.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
@@ -54,9 +55,13 @@ $features = $_POST['features'] ?? [];
 
 $featureRows = featureRepository::getByNames($pdo, $features);
 
-// For demonstration, we use a fixed price. In a real application, fetch the price from the database.
-$price = 10;
+// Price calculation
+$featurePriceTotal = array_sum(array_column($featureRows, 'price'));
+$roomPrice = roomRepository::getRoomPriceByType($pdo, $roomType);
 
+$price = ($roomPrice ?? 0) + $featurePriceTotal;
+
+// Create booking
 $bookingId = BookingRepository::create(
     $pdo,
     $guestName = $data['name'],
@@ -79,14 +84,6 @@ if (!empty($errors)) {
     exit;
 }
 
-
-var_dump($features);
-
-var_dump($featureRows);
-
-var_dump($bookingId);
-
-var_dump($featureIds);
 ?>
 
 <?php require __DIR__ . '/../includes/header.php'; ?>
