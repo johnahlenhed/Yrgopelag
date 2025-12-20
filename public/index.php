@@ -16,94 +16,182 @@ $hotelSpecificFeatures = $activeFeatures['hotel-specific'] ?? [];
 require __DIR__ . '/../includes/header.php'; ?>
 
 <main>
-    <p>Welcome to Hotel Borta bra, hemma bäst!</p>
 
-    <section>
-        <form method="POST" action="/public/book.php" class="booking-form">
+    <div class="welcome-container">
+        <h1>Welcome to Borta bra, hemma bäst!</h1>
+        <img src="/public/images/hotel.png" alt="full view of hotel">
+    </div>
 
-            <fieldset>
-                <label for="economy_checkin">Economy</label>
-                <input type="date" id="economy_checkin" name="economy_checkin" min="2026-01-01" max="2026-01-31">
-            </fieldset>
+    <div class="booking-container">
+        <section>
+            <form method="POST" action="/public/book.php" class="booking-form">
 
-            <fieldset class="standard-room">
-                <label for="standard_checkin">Standard</label>
-                <input type="date" id="standard_checkin" name="standard_checkin" min="2026-01-01" max="2026-01-31">
-            </fieldset>
+                <fieldset class="economy-room">
+                    <legend>Economy</legend>
 
-            <fieldset class="luxury-room">
-                <label for="luxury_checkin">Luxury</label>
-                <input type="date" id="luxury_checkin" name="luxury_checkin" min="2026-01-01" max="2026-01-31">
-            </fieldset>
+                    <!-- Hidden real date input -->
+                    <input
+                        type="date"
+                        name="economy_checkin"
+                        id="economy_checkin"
+                        min="2026-01-01"
+                        max="2026-01-31"
+                        hidden>
 
-            <fieldset>
-                <legend>Contact details</legend>
-                <label>
-                    Your name (guest_id)
-                    <input type="text" name="name" required>
-                </label>
+                    <!-- Visual grid -->
+                    <div class="date-grid" data-target="economy_checkin">
+                        <?php for ($day = 1; $day <= 31; $day++): ?>
+                            <button
+                                type="button"
+                                class="date-cell"
+                                data-date="2026-01-<?php echo str_pad((string)$day, 2, '0', STR_PAD_LEFT); ?>">
+                                <?php echo $day; ?>
+                            </button>
+                        <?php endfor; ?>
+                    </div>
+                </fieldset>
 
-                <label>
-                    Transfer code
-                    <input type="text" name="transfer_code" required>
-                </label>
-            </fieldset>
+                <fieldset class="standard-room">
+                    <legend>Standard</legend>
 
-            <fieldset>
-                <legend>Features</legend>
-                <h5>Water:</h5>
-                <?php foreach ($waterFeatures as $feature): ?>
+                    <!-- Hidden real date input -->
+                    <input
+                        type="date"
+                        name="standard_checkin"
+                        id="standard_checkin"
+                        min="2026-01-01"
+                        max="2026-01-31"
+                        hidden>
+
+                    <!-- Visual grid -->
+                    <div class="date-grid" data-target="standard_checkin">
+                        <?php for ($day = 1; $day <= 31; $day++): ?>
+                            <button
+                                type="button"
+                                class="date-cell"
+                                data-date="2026-01-<?php echo str_pad((string)$day, 2, '0', STR_PAD_LEFT); ?>">
+                                <?php echo $day; ?>
+                            </button>
+                        <?php endfor; ?>
+                    </div>
+                </fieldset>
+
+                <fieldset class="luxury-room">
+                    <legend>Luxury</legend>
+
+                    <!-- Hidden real date input -->
+                    <input
+                        type="date"
+                        name="luxury_checkin"
+                        id="luxury_checkin"
+                        min="2026-01-01"
+                        max="2026-01-31"
+                        hidden>
+
+                    <!-- Visual grid -->
+                    <div class="date-grid" data-target="luxury_checkin">
+                        <?php for ($day = 1; $day <= 31; $day++): ?>
+                            <button
+                                type="button"
+                                class="date-cell"
+                                data-date="2026-01-<?php echo str_pad((string)$day, 2, '0', STR_PAD_LEFT); ?>">
+                                <?php echo $day; ?>
+                            </button>
+                        <?php endfor; ?>
+                    </div>
+                </fieldset>
+
+                <fieldset>
+                    <legend>Contact details</legend>
                     <label>
-                        <input type="checkbox" name="features[]" value="<?php echo htmlspecialchars($feature['name']); ?>">
-                        <?php echo htmlspecialchars(ucwords(str_replace('_', ' ', $feature['name']))); ?> 
-                        (<?php echo htmlspecialchars(ucfirst($feature['tier'])); ?>)
-                        ($<?php echo($feature['price']); ?>)
+                        Your name (guest_id)
+                        <input type="text" name="name" required>
                     </label>
-                <?php endforeach; ?>
-                <h5>Games:</h5>
-                <?php foreach ($gamesFeatures as $feature): ?>
-                    <label>
-                        <input type="checkbox" name="features[]" value="<?php echo htmlspecialchars($feature['name']); ?>">
-                        <?php echo htmlspecialchars(ucwords(str_replace('_', ' ', $feature['name']))); ?> 
-                        (<?php echo htmlspecialchars(ucfirst($feature['tier'])); ?>)
-                        ($<?php echo($feature['price']); ?>)
-                    </label>
-                <?php endforeach; ?>
-                <h5>Wheels:</h5>
-                <?php foreach ($wheelsFeatures as $feature): ?>
-                    <label>
-                        <input type="checkbox" name="features[]" value="<?php echo htmlspecialchars($feature['name']); ?>">
-                        <?php echo htmlspecialchars(ucwords(str_replace('_', ' ', $feature['name']))); ?> 
-                        (<?php echo htmlspecialchars(ucfirst($feature['tier'])); ?>)
-                        ($<?php echo($feature['price']); ?>)
-                    </label>
-                <?php endforeach; ?>
-                <h5>Hotel-Specific:</h5>
-                <?php foreach ($hotelSpecificFeatures as $feature): ?>
-                    <label>
-                        <input type="checkbox" name="features[]" value="<?php echo htmlspecialchars($feature['name']); ?>">
-                        <?php echo htmlspecialchars(ucwords(str_replace('_', ' ', $feature['name']))); ?> 
-                        (<?php echo htmlspecialchars(ucfirst($feature['tier'])); ?>)
-                        ($<?php echo($feature['price']); ?>)
-                    </label>
-                <?php endforeach; ?>
-            </fieldset>
 
-            <button type="submit">Book Now</button>
-        </form>
-    </section>
+                    <label>
+                        Transfer code
+                        <input type="text" name="transfer_code" required>
+                    </label>
+                </fieldset>
 
-    <section class="room-info-container">
-        <article>
-        <img src="/public/images/economy-room.png" alt="Economy Room">
-        </article>
-        <article>
-        <img src="/public/images/standard-room.png" alt="Standard Room">
-        </article>
-        <article>
-        <img src="/public/images/luxury-room.png" alt="Luxury Room">
-        </article>
-    </section>
+                <fieldset>
+                    <legend>Features</legend>
+                    <h5>Water:</h5>
+                    <?php foreach ($waterFeatures as $feature): ?>
+                        <label>
+                            <input type="checkbox" name="features[]" value="<?php echo htmlspecialchars($feature['name']); ?>">
+                            <?php echo htmlspecialchars(ucwords(str_replace('_', ' ', $feature['name']))); ?>
+                            (<?php echo htmlspecialchars(ucfirst($feature['tier'])); ?>)
+                            ($<?php echo ($feature['price']); ?>)
+                        </label>
+                    <?php endforeach; ?>
+                    <h5>Games:</h5>
+                    <?php foreach ($gamesFeatures as $feature): ?>
+                        <label>
+                            <input type="checkbox" name="features[]" value="<?php echo htmlspecialchars($feature['name']); ?>">
+                            <?php echo htmlspecialchars(ucwords(str_replace('_', ' ', $feature['name']))); ?>
+                            (<?php echo htmlspecialchars(ucfirst($feature['tier'])); ?>)
+                            ($<?php echo ($feature['price']); ?>)
+                        </label>
+                    <?php endforeach; ?>
+                    <h5>Wheels:</h5>
+                    <?php foreach ($wheelsFeatures as $feature): ?>
+                        <label>
+                            <input type="checkbox" name="features[]" value="<?php echo htmlspecialchars($feature['name']); ?>">
+                            <?php echo htmlspecialchars(ucwords(str_replace('_', ' ', $feature['name']))); ?>
+                            (<?php echo htmlspecialchars(ucfirst($feature['tier'])); ?>)
+                            ($<?php echo ($feature['price']); ?>)
+                        </label>
+                    <?php endforeach; ?>
+                    <h5>Hotel-Specific:</h5>
+                    <?php foreach ($hotelSpecificFeatures as $feature): ?>
+                        <label>
+                            <input type="checkbox" name="features[]" value="<?php echo htmlspecialchars($feature['name']); ?>">
+                            <?php echo htmlspecialchars(ucwords(str_replace('_', ' ', $feature['name']))); ?>
+                            (<?php echo htmlspecialchars(ucfirst($feature['tier'])); ?>)
+                            ($<?php echo ($feature['price']); ?>)
+                        </label>
+                    <?php endforeach; ?>
+                </fieldset>
+
+                <button type="submit">Book Now</button>
+            </form>
+        </section>
+
+        <section class="room-info-container">
+            <article>
+                <img src="/public/images/economy-room.png" alt="Economy Room">
+            </article>
+            <article>
+                <img src="/public/images/standard-room.png" alt="Standard Room">
+            </article>
+            <article>
+                <img src="/public/images/luxury-room.png" alt="Luxury Room">
+            </article>
+        </section>
+
+    </div>
 </main>
 
 <?php require __DIR__ . '/../includes/footer.php'; ?>
+
+<script>
+        document.querySelectorAll('.date-grid').forEach(grid => {
+            const targetInput = document.getElementById(grid.dataset.target);
+
+            grid.addEventListener('click', e => {
+                if (!e.target.classList.contains('date-cell')) return;
+
+                // Remove previous selection
+                grid.querySelectorAll('.date-cell').forEach(btn =>
+                    btn.classList.remove('selected')
+                );
+
+                // Select clicked day
+                e.target.classList.add('selected');
+
+                // Set hidden input value
+                targetInput.value = e.target.dataset.date;
+            });
+        });
+</script>
