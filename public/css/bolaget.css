@@ -1,0 +1,101 @@
+.bolaget-main {
+    background-color: var(background-color);
+    text-align: left;
+}
+
+.bolaget-main h5 {
+    font-family: var(--body-font);
+    font-size: 1.3rem;
+    margin-top: 3rem;
+    margin-bottom: 3rem;
+}
+
+.bolaget-main section {
+    display: flex;
+    width: 80%;
+    padding: 4rem;
+}
+
+.bolaget-main section h1 {
+    font-size: 4rem;
+    margin-bottom: 2rem;
+}
+
+.bolaget-main section h3 {
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+}
+
+.bolaget-main section p {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+}
+
+.bolaget-main section img {
+    width: 30rem;
+    height: auto;
+    object-fit: cover;
+    border-radius: 5px;
+}
+
+.bolaget-hero {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    margin-top: 5rem;
+}
+
+.bolaget-hero h5 {
+    padding: 0 10rem 0 10rem;
+}
+
+.bolaget-hero img {
+    width: 100rem;
+    height: auto;
+}
+
+.e-type p {
+    padding-right: 4rem;
+}
+
+.mis-types {
+    text-align: left;
+    padding: 0 4rem 0 4rem;
+}
+
+.mis-types-container1 {
+    display: flex;
+    flex-direction: column;
+    padding-right: 2rem;
+    justify-content: center;
+}
+
+.mis-types-container2 {
+    display: flex;
+    flex-direction: column;
+    padding-left: 2rem;
+    justify-content: center;
+}
+
+.responsible-e-type div {
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: space-around;
+}
+
+.responsible-e-type img {
+    margin-left: 4rem;
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+}
+
+.notice {
+    flex-direction: column;
+}
+
+.notice h5 {
+    font-size: 1.5rem;
+}
