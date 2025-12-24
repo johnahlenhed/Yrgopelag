@@ -23,3 +23,10 @@
     color: #fff;
     border-color: #000;
 }
+
+.date-cell.blocked {
+    background: #eee;
+    color: #999;
+    cursor: not-allowed;
+    text-decoration: line-through;
+}
