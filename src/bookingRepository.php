@@ -26,4 +26,23 @@ final class bookingRepository
         ]);
         return (int)$pdo->lastInsertId();
     }
+
+    public static function getBookedDatesByRoom(PDO $pdo): array
+    {
+        $stmt = $pdo->query(
+            "SELECT room_type, arrival_date AS date from bookings WHERE arrival_date BETWEEN '2026-01-01' AND '2026-01-31'"
+        );
+
+        $blockedDates = [
+            'economy' => [],
+            'standard' => [],
+            'luxury' => [],
+        ];
+
+        foreach ($stmt->fetchAll()as $row) {
+            $blockedDates[$row['room_type']][] = $row = ['date'];
+        }
+
+        return $blockedDates;
+    }
 }
