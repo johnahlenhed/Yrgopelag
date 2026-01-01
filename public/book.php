@@ -33,11 +33,13 @@ if (count($selectedRooms) != 1) {
     exit('Please select only one room to book.');
 }
 
+$roomType = array_key_first($selectedRooms);
+
 $checkinTime = new DateTime('15:00');
-$arrival = new DateTime($data[array_key_first($selectedRooms) . '_checkin'] . ' ' . $checkinTime->format('H:i'));
+$arrival = new DateTime($data[$roomType . '_checkin'] . ' ' . $checkinTime->format('H:i'));
 $departure = (clone $arrival)->modify('+20 hours');
 
-if (bookingRepository::isDateBooked($pdo, $roomType, $arrivalDate)) {
+if (bookingRepository::isDateBooked($pdo, $roomType, $arrival)) {
     http_response_code(409);
     exit('The date is already booked.');
 }
@@ -50,8 +52,6 @@ if ($errors) {
     }
     exit;
 }
-
-$roomType = array_key_first($selectedRooms);
 
 // Validate and fetch features
 $features = $_POST['features'] ?? [];
