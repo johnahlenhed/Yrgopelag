@@ -26,4 +26,34 @@ final class bookingRepository
         ]);
         return (int)$pdo->lastInsertId();
     }
+
+    public static function getBookedDatesByRoom(PDO $pdo): array
+    {
+        $stmt = $pdo->query(
+            "SELECT room_type, arrival_date FROM bookings WHERE arrival_date BETWEEN '2026-01-01' AND '2026-01-31'"
+        );
+
+        $blockedDates = [
+            'economy' => [],
+            'standard' => [],
+            'luxury' => [],
+        ];
+
+        foreach ($stmt->fetchAll()as $row) {
+            $blockedDates[$row['room_type']][] = substr($row['arrival_date'], 0, 10);
+        }
+
+        return $blockedDates;
+    }
+
+    public static function isDateBooked(PDO $pdo, string $roomType, DateTime $arrivalDate): bool
+    {
+        $stmt = $pdo->prepare(
+            'SELECT 1 FROM bookings WHERE room_type = :room_type AND DATE(arrival_date) = :arrival_date LIMIT 1'
+        );
+
+        $stmt->execute([':room_type' => $roomType, ':arrival_date' => $arrivalDate->format('Y-m-d')]);
+
+        return (bool)$stmt->fetchColumn();
+    }
 }

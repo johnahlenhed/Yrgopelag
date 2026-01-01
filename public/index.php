@@ -5,6 +5,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../src/featureRepository.php';
 require_once __DIR__ . '/../src/roomRepository.php';
+require_once __DIR__ . '/../src/bookingRepository.php';
 
 $activeFeatures = featureRepository::getActiveFeaturesByCategory($pdo);
 
@@ -12,6 +13,12 @@ $waterFeatures = $activeFeatures['water'] ?? [];
 $wheelsFeatures = $activeFeatures['wheels'] ?? [];
 $gamesFeatures = $activeFeatures['games'] ?? [];
 $hotelSpecificFeatures = $activeFeatures['hotel-specific'] ?? [];
+
+$blockedDates = bookingRepository::getBookedDatesByRoom($pdo);
+
+
+
+var_dump($blockedDates);
 
 require __DIR__ . '/../includes/header.php'; ?>
 
@@ -176,11 +183,28 @@ require __DIR__ . '/../includes/header.php'; ?>
 <?php require __DIR__ . '/../includes/footer.php'; ?>
 
 <script>
+
+    const blockedDates = <?php echo json_encode($blockedDates, JSON_THROW_ON_ERROR); ?>;
+
         document.querySelectorAll('.date-grid').forEach(grid => {
             const targetInput = document.getElementById(grid.dataset.target);
+            const roomType = grid.dataset.target.replace('_checkin', '');
+            const blocked = blockedDates[roomType] ?? [];
+
+            grid.querySelectorAll('.date-cell').forEach(btn => {
+                const date = btn.dataset.date;
+
+                if (blocked.includes(date)) {
+                    btn.disabled = true;
+                    btn.classList.add('blocked');
+                }
+            });
 
             grid.addEventListener('click', e => {
-                if (!e.target.classList.contains('date-cell')) return;
+                if (
+                    !e.target.classList.contains('date-cell') ||
+                    e.target.classList.contains('blocked')                
+                ) return;
 
                 // Remove previous selection
                 grid.querySelectorAll('.date-cell').forEach(btn =>
