@@ -37,7 +37,10 @@ $checkinTime = new DateTime('15:00');
 $arrival = new DateTime($data[array_key_first($selectedRooms) . '_checkin'] . ' ' . $checkinTime->format('H:i'));
 $departure = (clone $arrival)->modify('+20 hours');
 
-
+if (bookingRepository::isDateBooked($pdo, $roomType, $arrivalDate)) {
+    http_response_code(409);
+    exit('The date is already booked.');
+}
 
 $errors = bookingValidation::validateBookingData($data);
 if ($errors) {
