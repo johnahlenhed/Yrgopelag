@@ -7,6 +7,7 @@ require_once __DIR__ . '/../src/bookingValidation.php';
 require_once __DIR__ . '/../src/bookingRepository.php';
 require_once __DIR__ . '/../src/featureRepository.php';
 require_once __DIR__ . '/../src/roomRepository.php';
+require_once __DIR__ . '/../src/centralBankClient.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
@@ -64,6 +65,17 @@ $roomPrice = roomRepository::getRoomPriceByType($pdo, $roomType);
 
 $price = ($roomPrice ?? 0) + $featurePriceTotal;
 
+// Validate transfer code with central bank
+$config = require __DIR__ . '/../config/centralbank.php';
+
+try {
+    $cb = new CentralBankClient($config);
+    $cb->validateTransferCode($data['transfer_code'], $price);
+} catch (RuntimeException $e) {
+    http_response_code(400);
+    exit('Invalid transfer code: ' . htmlspecialchars($e->getMessage()));
+}
+
 // Create booking
 $bookingId = BookingRepository::create(
     $pdo,
@@ -78,6 +90,7 @@ $bookingId = BookingRepository::create(
 $featureIds = array_column($featureRows, 'id');
 FeatureRepository::attachToBooking($pdo, $bookingId, $featureIds);
 
+$cb->deposit('hotelOwnerName', $data['transfer_code']);
 
 if (!empty($errors)) {
     http_response_code(400);
