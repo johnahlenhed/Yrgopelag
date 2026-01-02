@@ -8,24 +8,22 @@ final class CentralBankClient
     private string $user;
     private string $apiKey;
 
-    public function validateTransferCode(string $transferCode, int $totalCost): void
-    {
-        $this->post('/transferCode', [
-            'transfer_code' => $transferCode,
-            'total_price' => $totalCost,
-        ]);
-    }
+    
 
     public function __construct(array $config)
     {
-        $this->baseUrl = $config['api_base_url'];
+        $this->baseUrl = rtrim($config['api_base_url'], '/');
         $this->user = $config['user'];
         $this->apiKey = $config['api_key'];
     }
 
     private function post(string $endpoint, array $payload): array
     {
-        $ch = curl_init($this->baseUrl . $endpoint);
+        $url = $this->baseUrl . $endpoint;
+        error_log("POST to: " . $url);
+        error_log("Payload: " . json_encode($payload, JSON_PRETTY_PRINT));
+
+        $ch = curl_init($url);
 
         curl_setopt_array($ch, [
             CURLOPT_POST => true,
@@ -37,11 +35,16 @@ final class CentralBankClient
         $response = curl_exec($ch);
 
         if ($response === false) {
-            throw new RuntimeException('cURL error: ' . curl_error($ch));
+            $error = curl_error($ch);
+            curl_close($ch);
+            throw new RuntimeException('cURL error: ' . $error);
         }
 
         $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
+
+        error_log("Response status: " . $status);
+        error_log("Response body: " . $response);
 
         $data = json_decode($response, true);
 
@@ -49,14 +52,22 @@ final class CentralBankClient
             throw new RuntimeException($data['error'] ?? 'Centralbank error', $status);
         }
 
-        return $data;
+        return $data ?? [];
+    }
+
+    public function validateTransferCode(string $transferCode, int $totalCost): void
+    {
+        $this->post('/transferCode', [
+            'transferCode' => $transferCode,
+            'totalCost' => $totalCost,
+        ]);
     }
 
     public function deposit(string $transferCode): void
     {
         $this->post('/deposit', [
             'user' => $this->user,
-            'transfer_code' => $transferCode,
+            'transferCode' => $transferCode,
         ]);
     }
 
@@ -76,6 +87,11 @@ final class CentralBankClient
             'features_used' => $features,
             'star_rating' => $stars,
         ]);
+    }
+
+    public function syncIsland(array $payload): void
+    {
+        $this->post('/islands', $payload);
     }
     
 }

@@ -90,7 +90,35 @@ $bookingId = BookingRepository::create(
 $featureIds = array_column($featureRows, 'id');
 FeatureRepository::attachToBooking($pdo, $bookingId, $featureIds);
 
-$cb->deposit('hotelOwnerName', $data['transfer_code']);
+// Deposit funds
+try {
+    $cb->deposit($data['transfer_code']);
+} catch (RuntimeException $e) {
+    http_response_code(400);
+    exit('Payment failed: ' . htmlspecialchars($e->getMessage()));
+}
+
+// Send receipt
+$featuresUsed = array_map(
+    fn($f) => [
+        'activity' => $f['activity'],
+        'tier' => $f['tier'],
+    ],
+    $featureRows
+);
+
+try {
+    $cb->sendReceipt(
+        $data['name'],
+        $arrival->format('Y-m-d'),
+        $departure->format('Y-m-d'),
+        $featuresUsed,
+        5,
+    );
+} catch (RuntimeException $e) {
+    http_response_code(400);
+    exit('Failed to send receipt: ' . htmlspecialchars($e->getMessage()));
+}
 
 if (!empty($errors)) {
     http_response_code(400);

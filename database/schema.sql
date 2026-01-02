@@ -48,7 +48,7 @@ INSERT INTO features (category, tier, name, price, is_active) VALUES
 
 ('hotel-specific', 'economy', 'svenskt_kaffe_on_arrival', 1, 1),
 ('hotel-specific', 'basic', 'smörgåsbord_lunch', 2, 1),
-('hotel-specific', 'premium', 'E-Type_välkomnar_dig_med_monoton_sång', 4, 1),
+('hotel-specific', 'premium', 'E-Type_sjunger_monotont', 4, 1),
 ('hotel-specific', 'superior', 'Jan-Emanuel_sköter_din_deklaration', 7, 1);
 
 -- Junction table

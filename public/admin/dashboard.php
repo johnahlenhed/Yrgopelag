@@ -6,6 +6,11 @@ session_start();
 
 require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../src/featureRepository.php';
+require_once __DIR__ . '/../../src/centralBankClient.php';
+require_once __DIR__ . '/../../config/helpers.php';
+
+$centralBankConfig = require __DIR__ . '/../../config/centralbank.php';
+$cb = new centralBankClient($centralBankConfig);
 
 if (!isset($_SESSION['is_admin']) || $_SESSION['is_admin'] !== true) {
     header('Location: login.php');
@@ -25,6 +30,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     ];
 
     switch ($_POST['action'] ?? null) {
+
+        case 'sync_centralbank':
+            try {
+                $features = featureRepository::getAllFeatures($pdo);
+
+                $payload = [
+                    'user' => $centralBankConfig['user'],
+                    'api_key' => $centralBankConfig['api_key'],
+                    'islandName' => 'New Sweden',
+                    'hotelName' => 'Borta bra, hemma bäst',
+                    'url' => 'http://johnahlenhed.se/yrgopelag',
+                    'stars' => (int) getSetting($pdo, 'star_rating'),
+                    'features' => []
+                ];
+            
+                foreach ($features as $feature) {
+                    if ($feature['is_active']) {
+                        $payload['features'][$feature['category']][$feature['tier']] = $feature['name'];
+                    }
+                }
+
+                error_log("Syncing to Centralbank with payload: " . json_encode($payload, JSON_PRETTY_PRINT));
+
+                $response = $cb->syncIsland($payload);
+
+                error_log("Centralbank response: " . json_encode($response, JSON_PRETTY_PRINT));
+
+                $successMessage = 'Centralbank synchronized successfully.';
+            } catch (RuntimeException $e) {
+                error_log("Centralbank sync error: " . $e->getMessage());
+                $errorMessage = 'Error synchronizing with Centralbank: ' . htmlspecialchars($e->getMessage());
+            }
+            break;
+
         case 'update_settings':
             if (isset($_POST['stars'], $_POST['discounts'])) {
                 try {
@@ -193,6 +232,14 @@ require __DIR__ . '/../../includes/header.php';
         <?php endforeach; ?>
         
         <button type="submit">Update All Features</button>
+    </form>
+</section>
+
+<section>
+    <h2>Centralbanken</h2>
+    <form method="POST">
+        <input type="hidden" name="action" value="sync_centralbank">
+        <button type="submit">Synchronize with Centralbank</button>
     </form>
 </section>
 
