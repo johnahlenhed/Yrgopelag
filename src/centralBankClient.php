@@ -8,8 +8,6 @@ final class CentralBankClient
     private string $user;
     private string $apiKey;
 
-    
-
     public function __construct(array $config)
     {
         $this->baseUrl = rtrim($config['api_base_url'], '/');
@@ -29,7 +27,7 @@ final class CentralBankClient
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
-            CURLOPT_POSTFIELDS => json_encode($payload, JSON_THROW_ON_ERROR),
+            CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
         ]);
 
         $response = curl_exec($ch);
@@ -89,9 +87,16 @@ final class CentralBankClient
         ]);
     }
 
-    public function syncIsland(array $payload): void
+    public function syncIsland(array $payload): array
     {
-        $this->post('/islands', $payload);
+        return $this->post('/islands', $payload);
     }
-    
+
+    public function getIslandFeatures(): array
+    {
+        return $this->post('/islandFeatures', [
+            'user' => $this->user,
+            'api_key' => $this->apiKey,
+        ]);
+    }
 }
