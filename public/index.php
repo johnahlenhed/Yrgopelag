@@ -16,10 +16,6 @@ $hotelSpecificFeatures = $activeFeatures['hotel-specific'] ?? [];
 
 $blockedDates = bookingRepository::getBookedDatesByRoom($pdo);
 
-
-
-var_dump($blockedDates);
-
 require __DIR__ . '/../includes/header.php'; ?>
 
 <main>

@@ -23,33 +23,34 @@ CREATE TABLE bookings (
 
 CREATE TABLE features (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    category TEXT NOT NULL,
-    tier TEXT NOT NULL,
-    name TEXT NOT NULL,
+    category TEXT NOT NULL,      -- for internal grouping
+    activity TEXT NOT NULL,       -- for Centralbank API
+    tier TEXT NOT NULL,           
+    name TEXT NOT NULL,           
     price INTEGER NOT NULL,
     is_active INTEGER NOT NULL DEFAULT 1
 );
 
-INSERT INTO features (category, tier, name, price, is_active) VALUES
-('water', 'economy', 'pool', 1, 1),
-('water', 'basic', 'scuba_diving', 2, 1),
-('water', 'premium', 'olympic_pool', 4, 1),
-('water', 'superior', 'waterpark', 7, 1),
+INSERT INTO features (category, activity, tier, name, price, is_active) VALUES
+('water', 'water', 'economy', 'pool', 1, 1),
+('water', 'water', 'basic', 'scuba_diving', 2, 1),
+('water', 'water', 'premium', 'olympic_pool', 4, 1),
+('water', 'water', 'superior', 'waterpark', 7, 1),
 
-('games', 'economy', 'yahtzee', 1, 1),
-('games', 'basic', 'ping_pong_table', 2, 1),
-('games', 'premium', 'PS5', 4, 1),
-('games', 'superior', 'casino', 7, 1),
+('games', 'games', 'economy', 'yahtzee', 1, 1),
+('games', 'games', 'basic', 'ping_pong_table', 2, 1),
+('games', 'games', 'premium', 'PS5', 4, 1),
+('games', 'games', 'superior', 'casino', 7, 1),
 
-('wheels', 'economy', 'unicycle', 1, 1),
-('wheels', 'basic', 'bicycle', 2, 1),
-('wheels', 'premium', 'trike', 4, 1),
-('wheels', 'superior', 'four_wheeled_motorized_beast', 7, 1),
+('wheels', 'wheels', 'economy', 'unicycle', 1, 1),
+('wheels', 'wheels', 'basic', 'bicycle', 2, 1),
+('wheels', 'wheels', 'premium', 'trike', 4, 1),
+('wheels', 'wheels', 'superior', 'four_wheeled_motorized_beast', 7, 1),
 
-('hotel-specific', 'economy', 'svenskt_kaffe_on_arrival', 1, 1),
-('hotel-specific', 'basic', 'smörgåsbord_lunch', 2, 1),
-('hotel-specific', 'premium', 'E-Type_välkomnar_dig_med_monoton_sång', 4, 1),
-('hotel-specific', 'superior', 'Jan-Emanuel_sköter_din_deklaration', 7, 1);
+('hotel-specific', 'hotel-specific', 'economy', 'svenskt_kaffe_on_arrival', 1, 1),
+('hotel-specific', 'hotel-specific', 'basic', 'smörgåsbord_lunch', 2, 1),
+('hotel-specific', 'hotel-specific', 'premium', 'E-Type_sjunger_monotont', 4, 1),
+('hotel-specific', 'hotel-specific', 'superior', 'Jan-Emanuel_sköter_din_deklaration', 7, 1);
 
 -- Junction table
 CREATE TABLE booking_features (

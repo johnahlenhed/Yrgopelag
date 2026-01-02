@@ -6,6 +6,11 @@ session_start();
 
 require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../src/featureRepository.php';
+require_once __DIR__ . '/../../src/centralBankClient.php';
+require_once __DIR__ . '/../../config/helpers.php';
+
+$centralBankConfig = require __DIR__ . '/../../config/centralbank.php';
+$cb = new centralBankClient($centralBankConfig);
 
 if (!isset($_SESSION['is_admin']) || $_SESSION['is_admin'] !== true) {
     header('Location: login.php');
@@ -25,6 +30,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     ];
 
     switch ($_POST['action'] ?? null) {
+        case 'sync_centralbank':
+            try {
+                $features = featureRepository::getAllFeatures($pdo);
+
+                $payload = [
+                    'user' => $centralBankConfig['user'],
+                    'api_key' => $centralBankConfig['api_key'],
+                    'islandName' => 'New Sweden',
+                    'hotelName' => 'Borta bra, hemma bäst',
+                    'url' => 'http://johnahlenhed.se/yrgopelag',
+                    'stars' => (int) getSetting($pdo, 'star_rating'),
+                    'features' => []
+                ];
+
+                foreach ($features as $feature) {
+                    // Only sync active features
+                    if ($feature['is_active']) {
+                        $payload['features'][$feature['category']][$feature['tier']] = $feature['name'];
+                    }
+                }
+
+                // Debug logging
+                error_log("Syncing to Centralbank with payload: " . json_encode($payload, JSON_PRETTY_PRINT));
+
+                $response = $cb->syncIsland($payload);
+
+                error_log("Centralbank response: " . json_encode($response, JSON_PRETTY_PRINT));
+
+                $successMessage = 'Centralbank synchronized successfully.';
+            } catch (RuntimeException $e) {
+                error_log("Centralbank sync error: " . $e->getMessage());
+                $errorMessage = 'Error synchronizing with Centralbank: ' . htmlspecialchars($e->getMessage());
+            }
+            break;
+
         case 'update_settings':
             if (isset($_POST['stars'], $_POST['discounts'])) {
                 try {
@@ -93,6 +133,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
             break;
+        case 'fetch_from_centralbank':
+            try {
+                // Get features from Centralbank
+                $response = $cb->getIslandFeatures();
+
+                syncFeaturesFromCentralbank($pdo, $cb);
+                $successMessage = 'Features fetched from Centralbank and updated locally.';
+            } catch (Exception $e) {
+                $errorMessage = 'Error fetching from Centralbank: ' . htmlspecialchars($e->getMessage());
+            }
+            break;
     }
 }
 
@@ -126,7 +177,7 @@ require __DIR__ . '/../../includes/header.php';
     <h2>Hotel Settings</h2>
     <form method="POST">
         <input type="hidden" name="action" value="update_settings">
-        
+
         <label>
             Star rating
             <select name="stars">
@@ -151,7 +202,7 @@ require __DIR__ . '/../../includes/header.php';
     <h2>Room Prices</h2>
     <form method="POST">
         <input type="hidden" name="action" value="update_rooms">
-        
+
         <label>
             Economy
             <input type="number" name="economy_price">
@@ -173,28 +224,42 @@ require __DIR__ . '/../../includes/header.php';
     <h2>Features</h2>
     <form method="POST">
         <input type="hidden" name="action" value="update_features">
-        
+
         <?php foreach ($features as $feature): ?>
             <fieldset>
                 <legend><?php echo htmlspecialchars($feature['name']); ?></legend>
-                
-                <input type="hidden" name="feature_ids[]" value="<?php echo ($feature['id']); ?>">
-                
+
+                <input type="hidden" name="feature_ids[]" value="<?php echo (int)$feature['id']; ?>">
+
                 <label>
                     Price
-                    <input type="number" name="prices[]" value="<?php echo ($feature['price']); ?>" min="0">
+                    <input type="number" name="prices[]" value="<?php echo (int)$feature['price']; ?>" min="0">
                 </label>
-                
+
                 <label>
                     Enabled
-                    <input type="checkbox" name="availabilities[]" value="<?php echo ($feature['id']); ?>" <?php echo $feature['is_active'] ? 'checked' : ''; ?>>
+                    <input type="checkbox" name="availabilities[]" value="<?php echo (int)$feature['id']; ?>" <?php echo $feature['is_active'] ? 'checked' : ''; ?>>
                 </label>
             </fieldset>
         <?php endforeach; ?>
-        
+
         <button type="submit">Update All Features</button>
     </form>
 </section>
 
+<section>
+    <h2>Centralbanken</h2>
+    <p><strong>Warning:</strong> Syncing TO Centralbank may charge you for new features!</p>
+
+    <form method="POST" style="display: inline-block; margin-right: 10px;">
+        <input type="hidden" name="action" value="fetch_from_centralbank">
+        <button type="submit" style="background-color: #18d41eff;">Fetch from Centralbank</button>
+    </form>
+
+    <form method="POST" style="display: inline-block;">
+        <input type="hidden" name="action" value="sync_to_centralbank">
+        <button type="submit" style="background-color: #ffd900ff;" onclick="return confirm('This may charge you for new features. Continue?');">Push to Centralbank</button>
+    </form>
+</section>
 
 <?php require __DIR__ . '/../../includes/footer.php'; ?>
