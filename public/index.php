@@ -8,6 +8,7 @@ require_once __DIR__ . '/../src/roomRepository.php';
 require_once __DIR__ . '/../src/bookingRepository.php';
 
 $activeFeatures = featureRepository::getActiveFeaturesByCategory($pdo);
+$roomPrices = roomRepository::getRoomPrices($pdo);
 
 $waterFeatures = $activeFeatures['water'] ?? [];
 $wheelsFeatures = $activeFeatures['wheels'] ?? [];
@@ -39,6 +40,8 @@ require __DIR__ . '/../includes/header.php'; ?>
                         id="economy_checkin"
                         min="2026-01-01"
                         max="2026-01-31"
+                        data-room-type="economy"
+                        data-price="<?php echo $roomPrices['economy']; ?>"
                         hidden>
 
                     <!-- Visual grid -->
@@ -64,6 +67,8 @@ require __DIR__ . '/../includes/header.php'; ?>
                         id="standard_checkin"
                         min="2026-01-01"
                         max="2026-01-31"
+                        data-room-type="standard"
+                        data-price="<?php echo $roomPrices['standard']; ?>"
                         hidden>
 
                     <!-- Visual grid -->
@@ -89,6 +94,8 @@ require __DIR__ . '/../includes/header.php'; ?>
                         id="luxury_checkin"
                         min="2026-01-01"
                         max="2026-01-31"
+                        data-room-type="luxury"
+                        data-price="<?php echo $roomPrices['luxury']; ?>"
                         hidden>
 
                     <!-- Visual grid -->
@@ -122,7 +129,7 @@ require __DIR__ . '/../includes/header.php'; ?>
                     <h5>Water:</h5>
                     <?php foreach ($waterFeatures as $feature): ?>
                         <label>
-                            <input type="checkbox" name="features[]" value="<?php echo htmlspecialchars($feature['name']); ?>">
+                            <input type="checkbox" name="features[]" value="<?php echo htmlspecialchars($feature['name']); ?>" class="feature-checkbox" data-price="<?php echo $feature['price']; ?>">
                             <?php echo htmlspecialchars(ucwords(str_replace('_', ' ', $feature['name']))); ?>
                             (<?php echo htmlspecialchars(ucfirst($feature['tier'])); ?>)
                             ($<?php echo ($feature['price']); ?>)
@@ -131,7 +138,7 @@ require __DIR__ . '/../includes/header.php'; ?>
                     <h5>Games:</h5>
                     <?php foreach ($gamesFeatures as $feature): ?>
                         <label>
-                            <input type="checkbox" name="features[]" value="<?php echo htmlspecialchars($feature['name']); ?>">
+                            <input type="checkbox" name="features[]" value="<?php echo htmlspecialchars($feature['name']); ?>" class="feature-checkbox" data-price="<?php echo $feature['price']; ?>">
                             <?php echo htmlspecialchars(ucwords(str_replace('_', ' ', $feature['name']))); ?>
                             (<?php echo htmlspecialchars(ucfirst($feature['tier'])); ?>)
                             ($<?php echo ($feature['price']); ?>)
@@ -140,7 +147,7 @@ require __DIR__ . '/../includes/header.php'; ?>
                     <h5>Wheels:</h5>
                     <?php foreach ($wheelsFeatures as $feature): ?>
                         <label>
-                            <input type="checkbox" name="features[]" value="<?php echo htmlspecialchars($feature['name']); ?>">
+                            <input type="checkbox" name="features[]" value="<?php echo htmlspecialchars($feature['name']); ?>" class="feature-checkbox" data-price="<?php echo $feature['price']; ?>">
                             <?php echo htmlspecialchars(ucwords(str_replace('_', ' ', $feature['name']))); ?>
                             (<?php echo htmlspecialchars(ucfirst($feature['tier'])); ?>)
                             ($<?php echo ($feature['price']); ?>)
@@ -149,7 +156,7 @@ require __DIR__ . '/../includes/header.php'; ?>
                     <h5>Hotel-Specific:</h5>
                     <?php foreach ($hotelSpecificFeatures as $feature): ?>
                         <label>
-                            <input type="checkbox" name="features[]" value="<?php echo htmlspecialchars($feature['name']); ?>">
+                            <input type="checkbox" name="features[]" value="<?php echo htmlspecialchars($feature['name']); ?>" class="feature-checkbox" data-price="<?php echo $feature['price']; ?>">
                             <?php echo htmlspecialchars(ucwords(str_replace('_', ' ', $feature['name']))); ?>
                             (<?php echo htmlspecialchars(ucfirst($feature['tier'])); ?>)
                             ($<?php echo ($feature['price']); ?>)
@@ -160,6 +167,24 @@ require __DIR__ . '/../includes/header.php'; ?>
                 <button type="submit">Book Now</button>
             </form>
         </section>
+
+        <div class="price-calculator">
+            <h2>Your Booking</h2>
+            <div class="price-breakdown">
+                <div class="price-line">
+                    <span>Room:</span>
+                    <span id="room-price-display">Select a room</span>
+                </div>
+                <div class="price-line features-section" style="display: none;">
+                    <span>Features:</span>
+                    <span id="features-price-display">$0</span>
+                </div>
+                <div class="price-line total-line">
+                    <strong>Total:</strong>
+                    <strong id="total-price-display">$0</strong>
+                </div>
+            </div>
+        </div>
 
         <section class="room-info-container">
             <article>
@@ -179,39 +204,87 @@ require __DIR__ . '/../includes/header.php'; ?>
 <?php require __DIR__ . '/../includes/footer.php'; ?>
 
 <script>
-
     const blockedDates = <?php echo json_encode($blockedDates, JSON_THROW_ON_ERROR); ?>;
 
-        document.querySelectorAll('.date-grid').forEach(grid => {
-            const targetInput = document.getElementById(grid.dataset.target);
-            const roomType = grid.dataset.target.replace('_checkin', '');
-            const blocked = blockedDates[roomType] ?? [];
+    let selectedRoomPrice = 0;
+    let selectedRoomType = null;
 
-            grid.querySelectorAll('.date-cell').forEach(btn => {
-                const date = btn.dataset.date;
+    document.querySelectorAll('.date-grid').forEach(grid => {
+        const targetInput = document.getElementById(grid.dataset.target);
+        const roomType = grid.dataset.target.replace('_checkin', '');
+        const blocked = blockedDates[roomType] ?? [];
 
-                if (blocked.includes(date)) {
-                    btn.disabled = true;
-                    btn.classList.add('blocked');
+        grid.querySelectorAll('.date-cell').forEach(btn => {
+            const date = btn.dataset.date;
+
+            if (blocked.includes(date)) {
+                btn.disabled = true;
+                btn.classList.add('blocked');
+            }
+        });
+
+        grid.addEventListener('click', e => {
+            if (
+                !e.target.classList.contains('date-cell') ||
+                e.target.classList.contains('blocked')
+            ) return;
+
+            // Deselect all days
+            document.querySelectorAll('.date-grid .date-cell').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+
+            document.querySelectorAll('input[type="date"]').forEach(input => {
+                if (input !== targetInput) {
+                    input.value = '';
                 }
             });
 
-            grid.addEventListener('click', e => {
-                if (
-                    !e.target.classList.contains('date-cell') ||
-                    e.target.classList.contains('blocked')                
-                ) return;
+            // Select clicked day
+            e.target.classList.add('selected');
 
-                // Remove previous selection
-                grid.querySelectorAll('.date-cell').forEach(btn =>
-                    btn.classList.remove('selected')
-                );
+            // Set hidden input value
+            targetInput.value = e.target.dataset.date;
 
-                // Select clicked day
-                e.target.classList.add('selected');
-
-                // Set hidden input value
-                targetInput.value = e.target.dataset.date;
-            });
+            // Update price calculator
+            selectedRoomType = targetInput.dataset.roomType;
+            selectedRoomPrice = parseInt(targetInput.dataset.price);
+            updatePriceDisplay();
         });
+    });
+
+    document.querySelectorAll('.feature-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', updatePriceDisplay);
+    });
+
+    function updatePriceDisplay() {
+        const roomPriceDisplay = document.getElementById('room-price-display');
+        const featuresPriceDisplay = document.getElementById('features-price-display');
+        const totalPriceDisplay = document.getElementById('total-price-display');
+        const featuresSection = document.querySelector('.features-section');
+
+        let featuresTotal = 0;
+        document.querySelectorAll('.feature-checkbox:checked').forEach(checkbox => {
+            featuresTotal += parseInt(checkbox.dataset.price);
+        });
+
+        if (selectedRoomPrice > 0) {
+            roomPriceDisplay.textContent = `$${selectedRoomPrice} (${selectedRoomType})`;
+        } else {
+            roomPriceDisplay.textContent = 'Select a room';
+        }
+
+        if (featuresTotal > 0) {
+            featuresSection.style.display = 'flex';
+            featuresPriceDisplay.textContent = `$${featuresTotal}`;
+        } else {
+            featuresSection.style.display = 'none';
+            featuresPriceDisplay.textContent = '$0';
+        }
+
+        const total = selectedRoomPrice + featuresTotal;
+        totalPriceDisplay.textContent = `$${total}`;
+    }
+
+    updatePriceDisplay();
 </script>
