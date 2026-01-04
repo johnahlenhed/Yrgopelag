@@ -39,7 +39,7 @@ final class bookingRepository
             'luxury' => [],
         ];
 
-        foreach ($stmt->fetchAll()as $row) {
+        foreach ($stmt->fetchAll() as $row) {
             $blockedDates[$row['room_type']][] = substr($row['arrival_date'], 0, 10);
         }
 
@@ -55,5 +55,21 @@ final class bookingRepository
         $stmt->execute([':room_type' => $roomType, ':arrival_date' => $arrivalDate->format('Y-m-d')]);
 
         return (bool)$stmt->fetchColumn();
+    }
+
+    public static function getBookingCountByGuest(PDO $pdo, string $guestName): int
+    {
+        $stmt = $pdo->prepare(
+            'SELECT COUNT(*) FROM bookings WHERE guest_name = :guest_name'
+        );
+
+        $stmt->execute([':guest_name' => $guestName]);
+
+        return (int)$stmt->fetchColumn();
+    }
+
+    public static function isReturningCustomer(PDO $pdo, string $guestName): bool
+    {
+        return self::getBookingCountByGuest($pdo, $guestName) > 0;
     }
 }

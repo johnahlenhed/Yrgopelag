@@ -6,8 +6,10 @@ require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../src/featureRepository.php';
 require_once __DIR__ . '/../src/roomRepository.php';
 require_once __DIR__ . '/../src/bookingRepository.php';
+require_once __DIR__ . '/../config/helpers.php';
 
 $activeFeatures = featureRepository::getActiveFeaturesByCategory($pdo);
+$roomPrices = roomRepository::getRoomPrices($pdo);
 
 $waterFeatures = $activeFeatures['water'] ?? [];
 $wheelsFeatures = $activeFeatures['wheels'] ?? [];
@@ -15,6 +17,8 @@ $gamesFeatures = $activeFeatures['games'] ?? [];
 $hotelSpecificFeatures = $activeFeatures['hotel-specific'] ?? [];
 
 $blockedDates = bookingRepository::getBookedDatesByRoom($pdo);
+
+$loyaltyDiscount = (int)getSetting($pdo, 'loyalty_discount');
 
 require __DIR__ . '/../includes/header.php'; ?>
 
@@ -39,6 +43,8 @@ require __DIR__ . '/../includes/header.php'; ?>
                         id="economy_checkin"
                         min="2026-01-01"
                         max="2026-01-31"
+                        data-room-type="economy"
+                        data-price="<?php echo $roomPrices['economy']; ?>"
                         hidden>
 
                     <!-- Visual grid -->
@@ -64,6 +70,8 @@ require __DIR__ . '/../includes/header.php'; ?>
                         id="standard_checkin"
                         min="2026-01-01"
                         max="2026-01-31"
+                        data-room-type="standard"
+                        data-price="<?php echo $roomPrices['standard']; ?>"
                         hidden>
 
                     <!-- Visual grid -->
@@ -89,6 +97,8 @@ require __DIR__ . '/../includes/header.php'; ?>
                         id="luxury_checkin"
                         min="2026-01-01"
                         max="2026-01-31"
+                        data-room-type="luxury"
+                        data-price="<?php echo $roomPrices['luxury']; ?>"
                         hidden>
 
                     <!-- Visual grid -->
@@ -105,24 +115,11 @@ require __DIR__ . '/../includes/header.php'; ?>
                 </fieldset>
 
                 <fieldset>
-                    <legend>Contact details</legend>
-                    <label>
-                        Your name (guest_id)
-                        <input type="text" name="name" required>
-                    </label>
-
-                    <label>
-                        Transfer code
-                        <input type="text" name="transfer_code" required>
-                    </label>
-                </fieldset>
-
-                <fieldset>
                     <legend>Features</legend>
                     <h5>Water:</h5>
                     <?php foreach ($waterFeatures as $feature): ?>
                         <label>
-                            <input type="checkbox" name="features[]" value="<?php echo htmlspecialchars($feature['name']); ?>">
+                            <input type="checkbox" name="features[]" value="<?php echo htmlspecialchars($feature['name']); ?>" class="feature-checkbox" data-price="<?php echo $feature['price']; ?>">
                             <?php echo htmlspecialchars(ucwords(str_replace('_', ' ', $feature['name']))); ?>
                             (<?php echo htmlspecialchars(ucfirst($feature['tier'])); ?>)
                             ($<?php echo ($feature['price']); ?>)
@@ -131,7 +128,7 @@ require __DIR__ . '/../includes/header.php'; ?>
                     <h5>Games:</h5>
                     <?php foreach ($gamesFeatures as $feature): ?>
                         <label>
-                            <input type="checkbox" name="features[]" value="<?php echo htmlspecialchars($feature['name']); ?>">
+                            <input type="checkbox" name="features[]" value="<?php echo htmlspecialchars($feature['name']); ?>" class="feature-checkbox" data-price="<?php echo $feature['price']; ?>">
                             <?php echo htmlspecialchars(ucwords(str_replace('_', ' ', $feature['name']))); ?>
                             (<?php echo htmlspecialchars(ucfirst($feature['tier'])); ?>)
                             ($<?php echo ($feature['price']); ?>)
@@ -140,7 +137,7 @@ require __DIR__ . '/../includes/header.php'; ?>
                     <h5>Wheels:</h5>
                     <?php foreach ($wheelsFeatures as $feature): ?>
                         <label>
-                            <input type="checkbox" name="features[]" value="<?php echo htmlspecialchars($feature['name']); ?>">
+                            <input type="checkbox" name="features[]" value="<?php echo htmlspecialchars($feature['name']); ?>" class="feature-checkbox" data-price="<?php echo $feature['price']; ?>">
                             <?php echo htmlspecialchars(ucwords(str_replace('_', ' ', $feature['name']))); ?>
                             (<?php echo htmlspecialchars(ucfirst($feature['tier'])); ?>)
                             ($<?php echo ($feature['price']); ?>)
@@ -149,7 +146,7 @@ require __DIR__ . '/../includes/header.php'; ?>
                     <h5>Hotel-Specific:</h5>
                     <?php foreach ($hotelSpecificFeatures as $feature): ?>
                         <label>
-                            <input type="checkbox" name="features[]" value="<?php echo htmlspecialchars($feature['name']); ?>">
+                            <input type="checkbox" name="features[]" value="<?php echo htmlspecialchars($feature['name']); ?>" class="feature-checkbox" data-price="<?php echo $feature['price']; ?>">
                             <?php echo htmlspecialchars(ucwords(str_replace('_', ' ', $feature['name']))); ?>
                             (<?php echo htmlspecialchars(ucfirst($feature['tier'])); ?>)
                             ($<?php echo ($feature['price']); ?>)
@@ -157,9 +154,71 @@ require __DIR__ . '/../includes/header.php'; ?>
                     <?php endforeach; ?>
                 </fieldset>
 
+                <fieldset>
+                    <legend>Contact details</legend>
+                    <label>
+                        Your name (Centralbank username)
+                        <input type="text" name="name" required>
+                    </label>
+
+                    <div class="payment-method-selector">
+                        <h4>Payment Method</h4>
+                        <label>
+                            <input type="radio" name="payment_method" value="manual" checked>
+                            <strong>I have a transfer code</strong>
+                            <span class="option-desc">Already created at Centralbank</span>
+                        </label>
+
+                        <label class="payment-option">
+                            <input type="radio" name="payment_method" value="service">
+                            <strong>Use Centralbank Service</strong>
+                            <span class="option-desc">We'll create it for you (requires your API key)</span>
+                        </label>
+                    </div>
+
+                    <div id="manual-payment" class="payment-fields">
+                        <label>
+                            Transfer code
+                            <input type="text" name="transfer_code" id="transfer_code" placeholder="Enter your transferCode">
+                        </label>
+                    </div>
+
+                    <div id="service-payment" class="payment-fields" style="display: none;">
+                        <div class="service-notice">
+                            <p>⚠️ <strong>Security Notice:</strong> Your API is only used to create a transfer code for this booking. It is never stored.</p>
+                        </div>
+                        <label>
+                            Your centralbank API Key
+                            <input type="password" name="guest_api_key" id="guest_api_key" placeholder="Enter your Centralbank API Key">
+                        </label>
+                        <p class="helper-text">Amount needed: <strong>$<span id="total-amount-display">0</span></strong></p>
+                    </div>
+                </fieldset>
+
                 <button type="submit">Book Now</button>
             </form>
         </section>
+
+        <div class="price-calculator">
+            <h2>Your Booking</h2>
+            <div class="price-breakdown">
+                <div class="price-line">
+                    <span>Room:</span>
+                    <span id="room-price-display">Select a room</span>
+                </div>
+                <div class="price-line features-section" style="display: none;">
+                    <span>Features:</span>
+                    <span id="features-price-display">$0</span>
+                </div>
+                <div class="price-line total-line">
+                    <strong>Total:</strong>
+                    <strong id="total-price-display">$0</strong>
+                </div>
+            </div>
+            <div class="discount-info">
+                <h5>Are you a returning customer? Then you'll get a <?php echo $loyaltyDiscount; ?>% discount!</h5>
+            </div>
+        </div>
 
         <section class="room-info-container">
             <article>
@@ -179,39 +238,110 @@ require __DIR__ . '/../includes/header.php'; ?>
 <?php require __DIR__ . '/../includes/footer.php'; ?>
 
 <script>
-
     const blockedDates = <?php echo json_encode($blockedDates, JSON_THROW_ON_ERROR); ?>;
 
-        document.querySelectorAll('.date-grid').forEach(grid => {
-            const targetInput = document.getElementById(grid.dataset.target);
-            const roomType = grid.dataset.target.replace('_checkin', '');
-            const blocked = blockedDates[roomType] ?? [];
+    let selectedRoomPrice = 0;
+    let selectedRoomType = null;
 
-            grid.querySelectorAll('.date-cell').forEach(btn => {
-                const date = btn.dataset.date;
+    document.querySelectorAll('.date-grid').forEach(grid => {
+        const targetInput = document.getElementById(grid.dataset.target);
+        const roomType = grid.dataset.target.replace('_checkin', '');
+        const blocked = blockedDates[roomType] ?? [];
 
-                if (blocked.includes(date)) {
-                    btn.disabled = true;
-                    btn.classList.add('blocked');
+        grid.querySelectorAll('.date-cell').forEach(btn => {
+            const date = btn.dataset.date;
+
+            if (blocked.includes(date)) {
+                btn.disabled = true;
+                btn.classList.add('blocked');
+            }
+        });
+
+        grid.addEventListener('click', e => {
+            if (
+                !e.target.classList.contains('date-cell') ||
+                e.target.classList.contains('blocked')
+            ) return;
+
+            // Deselect all days
+            document.querySelectorAll('.date-grid .date-cell').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+
+            document.querySelectorAll('input[type="date"]').forEach(input => {
+                if (input !== targetInput) {
+                    input.value = '';
                 }
             });
 
-            grid.addEventListener('click', e => {
-                if (
-                    !e.target.classList.contains('date-cell') ||
-                    e.target.classList.contains('blocked')                
-                ) return;
+            // Select clicked day
+            e.target.classList.add('selected');
 
-                // Remove previous selection
-                grid.querySelectorAll('.date-cell').forEach(btn =>
-                    btn.classList.remove('selected')
-                );
+            // Set hidden input value
+            targetInput.value = e.target.dataset.date;
 
-                // Select clicked day
-                e.target.classList.add('selected');
-
-                // Set hidden input value
-                targetInput.value = e.target.dataset.date;
-            });
+            // Update price calculator
+            selectedRoomType = targetInput.dataset.roomType;
+            selectedRoomPrice = parseInt(targetInput.dataset.price);
+            updatePriceDisplay();
         });
+    });
+
+    document.querySelectorAll('.feature-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', updatePriceDisplay);
+    });
+
+    document.querySelectorAll('input[name="payment_method"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const manualPayment = document.getElementById('manual-payment');
+            const servicePayment = document.getElementById('service-payment');
+            const transferCodeInput = document.getElementById('transfer_code');
+            const apiKeyInput = document.getElementById('guest_api_key');
+
+            if (this.value === 'manual') {
+                manualPayment.style.display = 'block';
+                servicePayment.style.display = 'none';
+                transferCodeInput.setAttribute('required', '');
+                apiKeyInput.removeAttribute('required');
+            } else {
+                manualPayment.style.display = 'none';
+                servicePayment.style.display = 'block';
+                transferCodeInput.removeAttribute('required');
+                apiKeyInput.setAttribute('required', '');
+            }
+        });
+    });
+
+    function updatePriceDisplay() {
+        const roomPriceDisplay = document.getElementById('room-price-display');
+        const featuresPriceDisplay = document.getElementById('features-price-display');
+        const totalPriceDisplay = document.getElementById('total-price-display');
+        const featuresSection = document.querySelector('.features-section');
+
+        let featuresTotal = 0;
+        document.querySelectorAll('.feature-checkbox:checked').forEach(checkbox => {
+            featuresTotal += parseInt(checkbox.dataset.price);
+        });
+
+        if (selectedRoomPrice > 0) {
+            roomPriceDisplay.textContent = `$${selectedRoomPrice} (${selectedRoomType})`;
+        } else {
+            roomPriceDisplay.textContent = 'Select a room';
+        }
+
+        if (featuresTotal > 0) {
+            featuresSection.style.display = 'flex';
+            featuresPriceDisplay.textContent = `$${featuresTotal}`;
+        } else {
+            featuresSection.style.display = 'none';
+            featuresPriceDisplay.textContent = '$0';
+        }
+
+        const total = selectedRoomPrice + featuresTotal;
+        totalPriceDisplay.textContent = `$${total}`;
+
+        document.getElementById('total-amount-display').textContent = total;
+    }
+
+    updatePriceDisplay();
 </script>

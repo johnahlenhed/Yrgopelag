@@ -35,7 +35,7 @@ INSERT INTO features (category, activity, tier, name, price, is_active) VALUES
 ('water', 'water', 'economy', 'pool', 1, 1),
 ('water', 'water', 'basic', 'scuba_diving', 2, 1),
 ('water', 'water', 'premium', 'olympic_pool', 4, 1),
-('water', 'water', 'superior', 'waterpark', 7, 1),
+('water', 'water', 'superior', 'waterpark_with_fire_and_minibar', 7, 1),
 
 ('games', 'games', 'economy', 'yahtzee', 1, 1),
 ('games', 'games', 'basic', 'ping_pong_table', 2, 1),
@@ -49,7 +49,7 @@ INSERT INTO features (category, activity, tier, name, price, is_active) VALUES
 
 ('hotel-specific', 'hotel-specific', 'economy', 'svenskt_kaffe_on_arrival', 1, 1),
 ('hotel-specific', 'hotel-specific', 'basic', 'smörgåsbord_lunch', 2, 1),
-('hotel-specific', 'hotel-specific', 'premium', 'E-Type_sjunger_monotont', 4, 1),
+('hotel-specific', 'hotel-specific', 'premium', 'en_burk_surströmming', 4, 1),
 ('hotel-specific', 'hotel-specific', 'superior', 'Jan-Emanuel_sköter_din_deklaration', 7, 1);
 
 -- Junction table

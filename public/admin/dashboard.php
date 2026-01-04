@@ -30,38 +30,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     ];
 
     switch ($_POST['action'] ?? null) {
-        case 'sync_centralbank':
+        case 'fetch_from_centralbank':
             try {
-                $features = featureRepository::getAllFeatures($pdo);
+                $response = $cb->getIslandFeatures();
 
-                $payload = [
-                    'user' => $centralBankConfig['user'],
-                    'api_key' => $centralBankConfig['api_key'],
-                    'islandName' => 'New Sweden',
-                    'hotelName' => 'Borta bra, hemma bäst',
-                    'url' => 'http://johnahlenhed.se/yrgopelag',
-                    'stars' => (int) getSetting($pdo, 'star_rating'),
-                    'features' => []
-                ];
+                error_log("Centralbank island data: " . json_encode($response, JSON_PRETTY_PRINT));
 
-                foreach ($features as $feature) {
-                    // Only sync active features
-                    if ($feature['is_active']) {
-                        $payload['features'][$feature['category']][$feature['tier']] = $feature['name'];
-                    }
+                // Update star rating
+                if (isset($response['island']['stars'])) {
+                    $stmt = $pdo->prepare('UPDATE settings SET value = :stars WHERE key = :key');
+                    $stmt->execute([
+                        ':stars' => (string)$response['island']['stars'],
+                        ':key' => 'star_rating'
+                    ]);
                 }
 
-                // Debug logging
-                error_log("Syncing to Centralbank with payload: " . json_encode($payload, JSON_PRETTY_PRINT));
+                // Sync features
+                $centralBankFeatures = $response['features'] ?? [];
+                $localFeatures = featureRepository::getAllFeatures($pdo);
 
-                $response = $cb->syncIsland($payload);
+                $activeFeatures = [];
+                foreach ($centralBankFeatures as $feature) {
+                    $key = $feature['activity'] . '_' . $feature['tier'];
+                    $activeFeatures[$key] = true;
+                }
 
-                error_log("Centralbank response: " . json_encode($response, JSON_PRETTY_PRINT));
+                // Update local database based on Centralbank data
+                foreach ($localFeatures as $localFeature) {
+                    $key = $localFeature['activity'] . '_' . $localFeature['tier'];
+                    $isActive = isset($activeFeatures[$key]);
 
-                $successMessage = 'Centralbank synchronized successfully.';
-            } catch (RuntimeException $e) {
-                error_log("Centralbank sync error: " . $e->getMessage());
-                $errorMessage = 'Error synchronizing with Centralbank: ' . htmlspecialchars($e->getMessage());
+                    featureRepository::updateFeature(
+                        $pdo,
+                        (int)$localFeature['id'],
+                        (int)$localFeature['price'],
+                        $isActive
+                    );
+                }
+                $successMessage = 'Data fetched from Centralbank and local database updated.';
+            } catch (Exception $e) {
+                error_log("Centralbank fetch error: " . $e->getMessage());
+                $errorMessage = 'Error fetching from Centralbank: ' . htmlspecialchars($e->getMessage());
             }
             break;
 
@@ -133,17 +142,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
             break;
-        case 'fetch_from_centralbank':
-            try {
-                // Get features from Centralbank
-                $response = $cb->getIslandFeatures();
-
-                syncFeaturesFromCentralbank($pdo, $cb);
-                $successMessage = 'Features fetched from Centralbank and updated locally.';
-            } catch (Exception $e) {
-                $errorMessage = 'Error fetching from Centralbank: ' . htmlspecialchars($e->getMessage());
-            }
-            break;
     }
 }
 
@@ -155,6 +153,9 @@ try {
     error_log("Error fetching features: " . $e->getMessage());
     $features = [];
 }
+
+$currentStars = (int)getSetting($pdo, 'star_rating');
+$currentDiscount = (int)getSetting($pdo, 'loyalty_discount');
 
 require __DIR__ . '/../../includes/header.php';
 ?>
@@ -175,6 +176,9 @@ require __DIR__ . '/../../includes/header.php';
 
 <section>
     <h2>Hotel Settings</h2>
+    <p class="current-settings">
+        Current: <?php echo $currentStars; ?> | Discount: <?php echo $currentDiscount; ?>%
+    </p>
     <form method="POST">
         <input type="hidden" name="action" value="update_settings">
 
@@ -190,8 +194,8 @@ require __DIR__ . '/../../includes/header.php';
         </label>
 
         <label>
-            Discounts (%)
-            <input type="number" name="discounts" min="0" max="100" step="1">
+            Loyalty Discount (%)
+            <input type="number" name="discounts" min="0" max="100" step="1" value="<?php echo $currentDiscount; ?>" required>
         </label>
 
         <button type="submit">Save Settings</button>
@@ -204,15 +208,27 @@ require __DIR__ . '/../../includes/header.php';
         <input type="hidden" name="action" value="update_rooms">
 
         <label>
-            Economy
+            Economy (Current price: <?php
+                $stmt = $pdo->prepare('SELECT price FROM rooms WHERE type = :type');
+                $stmt->execute([':type' => 'economy']);
+                $economyPrice = $stmt->fetchColumn();
+                echo htmlspecialchars((string)$economyPrice); ?>)
             <input type="number" name="economy_price">
         </label>
         <label>
-            Standard
+            Standard (Current price: <?php
+                $stmt = $pdo->prepare('SELECT price FROM rooms WHERE type = :type');
+                $stmt->execute([':type' => 'standard']);
+                $standardPrice = $stmt->fetchColumn();
+                echo htmlspecialchars((string)$standardPrice); ?>)
             <input type="number" name="standard_price">
         </label>
         <label>
-            Luxury
+            Luxury (Current price: <?php
+                $stmt = $pdo->prepare('SELECT price FROM rooms WHERE type = :type');
+                $stmt->execute([':type' => 'luxury']);
+                $luxuryPrice = $stmt->fetchColumn();
+                echo htmlspecialchars((string)$luxuryPrice); ?>)
             <input type="number" name="luxury_price">
         </label>
 
@@ -249,17 +265,17 @@ require __DIR__ . '/../../includes/header.php';
 
 <section>
     <h2>Centralbanken</h2>
-    <p><strong>Warning:</strong> Syncing TO Centralbank may charge you for new features!</p>
 
     <form method="POST" style="display: inline-block; margin-right: 10px;">
         <input type="hidden" name="action" value="fetch_from_centralbank">
         <button type="submit" style="background-color: #18d41eff;">Fetch from Centralbank</button>
     </form>
 
-    <form method="POST" style="display: inline-block;">
-        <input type="hidden" name="action" value="sync_to_centralbank">
-        <button type="submit" style="background-color: #ffd900ff;" onclick="return confirm('This may charge you for new features. Continue?');">Push to Centralbank</button>
-    </form>
+    <p class="info-text">
+        <strong>Note:</strong> To add or modify features at Centralbank, please use the
+        <a href="https://www.yrgopelag.se/centralbank/" target="_blank">Centralbank UI</a> directly.
+        Use "Fetch" above to sync those changes to your local database.
+    </p>
 </section>
 
 <?php require __DIR__ . '/../../includes/footer.php'; ?>
