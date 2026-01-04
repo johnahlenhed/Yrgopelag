@@ -6,6 +6,7 @@ require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../src/featureRepository.php';
 require_once __DIR__ . '/../src/roomRepository.php';
 require_once __DIR__ . '/../src/bookingRepository.php';
+require_once __DIR__ . '/../config/helpers.php';
 
 $activeFeatures = featureRepository::getActiveFeaturesByCategory($pdo);
 $roomPrices = roomRepository::getRoomPrices($pdo);
@@ -16,6 +17,8 @@ $gamesFeatures = $activeFeatures['games'] ?? [];
 $hotelSpecificFeatures = $activeFeatures['hotel-specific'] ?? [];
 
 $blockedDates = bookingRepository::getBookedDatesByRoom($pdo);
+
+$loyaltyDiscount = (int)getSetting($pdo, 'loyalty_discount');
 
 require __DIR__ . '/../includes/header.php'; ?>
 
@@ -211,6 +214,9 @@ require __DIR__ . '/../includes/header.php'; ?>
                     <strong>Total:</strong>
                     <strong id="total-price-display">$0</strong>
                 </div>
+            </div>
+            <div class="discount-info">
+                <h5>Are you a returning customer? Then you'll get a <?php echo $loyaltyDiscount; ?>% discount!</h5>
             </div>
         </div>
 

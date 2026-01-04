@@ -194,7 +194,7 @@ require __DIR__ . '/../../includes/header.php';
         </label>
 
         <label>
-            Discounts (%)
+            Loyalty Discount (%)
             <input type="number" name="discounts" min="0" max="100" step="1" value="<?php echo $currentDiscount; ?>" required>
         </label>
 

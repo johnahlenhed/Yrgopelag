@@ -71,10 +71,23 @@ foreach ($featureRows as $feature) {
     }
 }
 
+// Check if returning customer for discount
+$isReturningCustomer = bookingRepository::isReturningCustomer($pdo, $data['name']);
+$previousBookings = bookingRepository::getBookingCountByGuest($pdo, $data['name']);
+$loyaltyDiscount = (int)getSetting($pdo, 'loyalty_discount');
+
 // Price calculation
 $featurePriceTotal = array_sum(array_column($featureRows, 'price'));
 $roomPrice = roomRepository::getRoomPriceByType($pdo, $roomType);
-$totalPrice = ($roomPrice ?? 0) + $featurePriceTotal;
+$subtotal = ($roomPrice ?? 0) + $featurePriceTotal;
+
+// Apply discount if applicable
+$discountAmount = 0;
+if ($isReturningCustomer && $previousBookings >= 1) {
+    $discountAmount = (int)ceil($subtotal * ($loyaltyDiscount / 100));
+}
+
+$totalPrice = $subtotal - $discountAmount;
 
 // Validate transfer code with central bank
 $config = require __DIR__ . '/../config/centralbank.php';
@@ -184,6 +197,10 @@ try {
     <h1>Booking Confirmation</h1>
     <p>Thank you, <?php echo htmlspecialchars($data['name']); ?>.</p>
     <p>Your booking has been confirmed.</p>
+
+    <?php if ($isReturningCustomer && $previousBookings >= 1): ?>
+        <p>You are a returning customer! A loyalty discount of <?php echo $loyaltyDiscount; ?>% has been applied to your booking.</p>
+    <?php endif; ?>
 
     <h3>Booking Details:</h3>
     <ul>
