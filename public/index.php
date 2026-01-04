@@ -112,19 +112,6 @@ require __DIR__ . '/../includes/header.php'; ?>
                 </fieldset>
 
                 <fieldset>
-                    <legend>Contact details</legend>
-                    <label>
-                        Your name (guest_id)
-                        <input type="text" name="name" required>
-                    </label>
-
-                    <label>
-                        Transfer code
-                        <input type="text" name="transfer_code" required>
-                    </label>
-                </fieldset>
-
-                <fieldset>
                     <legend>Features</legend>
                     <h5>Water:</h5>
                     <?php foreach ($waterFeatures as $feature): ?>
@@ -162,6 +149,47 @@ require __DIR__ . '/../includes/header.php'; ?>
                             ($<?php echo ($feature['price']); ?>)
                         </label>
                     <?php endforeach; ?>
+                </fieldset>
+
+                <fieldset>
+                    <legend>Contact details</legend>
+                    <label>
+                        Your name (Centralbank username)
+                        <input type="text" name="name" required>
+                    </label>
+
+                    <div class="payment-method-selector">
+                        <h4>Payment Method</h4>
+                        <label>
+                            <input type="radio" name="payment_method" value="manual" checked>
+                            <strong>I have a transfer code</strong>
+                            <span class="option-desc">Already created at Centralbank</span>
+                        </label>
+
+                        <label class="payment-option">
+                            <input type="radio" name="payment_method" value="service">
+                            <strong>Use Centralbank Service</strong>
+                            <span class="option-desc">We'll create it for you (requires your API key)</span>
+                        </label>
+                    </div>
+
+                    <div id="manual-payment" class="payment-fields">
+                        <label>
+                            Transfer code
+                            <input type="text" name="transfer_code" id="transfer_code" placeholder="Enter your transferCode">
+                        </label>
+                    </div>
+
+                    <div id="service-payment" class="payment-fields" style="display: none;">
+                        <div class="service-notice">
+                            <p>⚠️ <strong>Security Notice:</strong> Your API is only used to create a transfer code for this booking. It is never stored.</p>
+                        </div>
+                        <label>
+                            Your centralbank API Key
+                            <input type="password" name="guest_api_key" id="guest_api_key" placeholder="Enter your Centralbank API Key">
+                        </label>
+                        <p class="helper-text">Amount needed: <strong>$<span id="total-amount-display">0</span></strong></p>
+                    </div>
                 </fieldset>
 
                 <button type="submit">Book Now</button>
@@ -257,6 +285,27 @@ require __DIR__ . '/../includes/header.php'; ?>
         checkbox.addEventListener('change', updatePriceDisplay);
     });
 
+    document.querySelectorAll('input[name="payment_method"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const manualPayment = document.getElementById('manual-payment');
+            const servicePayment = document.getElementById('service-payment');
+            const transferCodeInput = document.getElementById('transfer_code');
+            const apiKeyInput = document.getElementById('guest_api_key');
+
+            if (this.value === 'manual') {
+                manualPayment.style.display = 'block';
+                servicePayment.style.display = 'none';
+                transferCodeInput.setAttribute('required', '');
+                apiKeyInput.removeAttribute('required');
+            } else {
+                manualPayment.style.display = 'none';
+                servicePayment.style.display = 'block';
+                transferCodeInput.removeAttribute('required');
+                apiKeyInput.setAttribute('required', '');
+            }
+        });
+    });
+
     function updatePriceDisplay() {
         const roomPriceDisplay = document.getElementById('room-price-display');
         const featuresPriceDisplay = document.getElementById('features-price-display');
@@ -284,6 +333,8 @@ require __DIR__ . '/../includes/header.php'; ?>
 
         const total = selectedRoomPrice + featuresTotal;
         totalPriceDisplay.textContent = `$${total}`;
+
+        document.getElementById('total-amount-display').textContent = total;
     }
 
     updatePriceDisplay();

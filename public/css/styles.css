@@ -119,6 +119,64 @@ section {
     height: auto;
 }
 
+/* Payment section */
+.payment-method-selector {
+    margin: 15px 0;
+}
+
+.payment-option {
+    display: block;
+    padding: 12px;
+    margin: 8px 0;
+    border: 2px solid var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.payment-option:hover {
+    border-color: var(--primary-brand-color);
+    background-color: rgba(140, 29, 24, 0.05);
+}
+
+.payment-option input[type="radio"] {
+    margin-right: 10px;
+}
+
+.payment-option strong {
+    display: block;
+    margin-bottom: 4px;
+}
+
+.option-desc {
+    font-size: 0.9em;
+    color: #666;
+    margin-left: 24px;
+}
+
+.payment-fields {
+    margin-top: 15px;
+}
+
+.service-notice {
+    background-color: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 4px;
+    padding: 12px;
+    margin-bottom: 15px;
+}
+
+.service-notice p {
+    margin: 0;
+    font-size: 0.9em;
+}
+
+.helper-text {
+    margin-top: 8px;
+    font-size: 0.95em;
+    color: #666;
+}
+
 /* Price display */
 .price-calculator {
     height: fit-content;

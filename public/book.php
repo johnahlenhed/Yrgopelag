@@ -22,7 +22,9 @@ $data = [
     'standard_checkin' => $_POST['standard_checkin'] ?? null,
     'luxury_checkin' => $_POST['luxury_checkin'] ?? null,
     'name' => $_POST['name'] ?? null,
+    'payment_method' => $_POST['payment_method'] ?? null,
     'transfer_code' => $_POST['transfer_code'] ?? null,
+    'guest_api_key' => $_POST['guest_api_key'] ?? null,
 ];
 
 $errors = bookingValidation::validateBookingData($data);
@@ -40,7 +42,8 @@ $selectedRooms = array_filter([
     'luxury' => $data['luxury_checkin'],
 ]);
 
-if (count($selectedRooms) != 1) {
+if (count($selectedRooms) !== 1) {
+    http_response_code(400);
     exit('Please select only one room to book.');
 }
 
@@ -77,11 +80,49 @@ $totalPrice = ($roomPrice ?? 0) + $featurePriceTotal;
 $config = require __DIR__ . '/../config/centralbank.php';
 $cb = new CentralBankClient($config);
 
-try {
-    $cb->validateTransferCode($data['transfer_code'], $totalPrice);
-} catch (RuntimeException $e) {
-    http_response_code(400);
-    exit('Invalid transfer code: ' . htmlspecialchars($e->getMessage()));
+// Handle payment method
+$usedTransferCodeService = false;
+
+if ($data['payment_method'] === 'service') {
+    // TransferCode Service - create code for guest
+    if (empty($data['guest_api_key'])) {
+        http_response_code(400);
+        exit('API key is required for TransferCode Service.');
+    }
+    
+    try {
+        // Create transferCode using guest's API key
+        $transferCode = $cb->createTransferCodeForGuest(
+            $data['name'],
+            $data['guest_api_key'],
+            $totalPrice
+        );
+        
+        // Immediately unset the API key from memory
+        unset($data['guest_api_key']);
+        
+        $usedTransferCodeService = true;
+        
+    } catch (RuntimeException $e) {
+        http_response_code(400);
+        exit('Failed to create transfer code: ' . htmlspecialchars($e->getMessage()));
+    }
+    
+} else {
+    // Manual transferCode - validate it
+    if (empty($data['transfer_code'])) {
+        http_response_code(400);
+        exit('Transfer code is required.');
+    }
+    
+    $transferCode = $data['transfer_code'];
+    
+    try {
+        $cb->validateTransferCode($transferCode, $totalPrice);
+    } catch (RuntimeException $e) {
+        http_response_code(400);
+        exit('Invalid transfer code: ' . htmlspecialchars($e->getMessage()));
+    }
 }
 
 // Create booking in database
@@ -105,7 +146,7 @@ try {
 
 // Deposit funds to hotel account
 try {
-    $cb->deposit($data['transfer_code']);
+    $cb->deposit($transferCode);
 } catch (RuntimeException $e) {
     http_response_code(400);
     exit('Payment failed: ' . htmlspecialchars($e->getMessage()));
@@ -138,11 +179,33 @@ try {
 
 <?php require __DIR__ . '/../includes/header.php'; ?>
 
+
 <section>
     <h1>Booking Confirmation</h1>
-    <p>Your booking has been received. We hope you enjoy your stay.</p>
+    <p>Thank you, <?php echo htmlspecialchars($data['name']); ?>.</p>
+    <p>Your booking has been confirmed.</p>
 
-    <h3>Make sure you visit our bar "Bolaget".</h3>
+    <h3>Booking Details:</h3>
+    <ul>
+        <li>Room Type: <?php echo htmlspecialchars($roomType); ?></li>
+        <li>Arrival Date: <?php echo htmlspecialchars($arrival->format('Y-m-d')); ?></li>
+        <li>Departure Date: <?php echo htmlspecialchars($departure->format('Y-m-d')); ?></li>
+        <li>Total Price: <?php echo number_format($totalPrice, 2); ?></li>
+    </ul>
+
+    <?php if (!empty($featureRows)): ?>
+        <h4>Additional Features:</h4>
+        <ul>
+            <?php foreach ($featureRows as $feature): ?>
+                <li><?php echo htmlspecialchars($feature['name']); ?> (<?php echo ($feature['price']); ?>)</li>
+            <?php endforeach; ?>
+        </ul>
+    <?php endif; ?>
+
+    <h3>Make sure you visit our bar <a href="/public/bolaget.php">Bolaget</a>.</h3>
+    <p>E-Type will welcome you personally.</p>
+
+    <h4>We hope you enjoy your stay!</h4>
 </section>
 
 

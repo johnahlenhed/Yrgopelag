@@ -99,4 +99,19 @@ final class CentralBankClient
             'api_key' => $this->apiKey,
         ]);
     }
+
+    public function createTransferCodeForGuest(string $guestUsername, string $guestApiKey, int $amount): string
+    {
+        $response = $this->post('/withdraw', [
+            'user' => $guestUsername,
+            'api_key' => $guestApiKey,
+            'amount' => $amount,
+        ]);
+
+        if (!isset($response['transferCode'])) {
+            throw new RuntimeException('Invalid response from Centralbank: missing transferCode');
+        }
+
+        return $response['transferCode'];
+    }
 }
