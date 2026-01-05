@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="/public/css/styles.css">
     <link rel="stylesheet" href="/public/css/booking-calendar.css">
     <link rel="stylesheet" href="/public/css/bolaget.css">
-    <link rel="icon" href="/images/borta-bra-logo2.png">
+    <link rel="icon" href="/public/images/borta-bra-logo2.png">
     <title>Borta bra, hemma bäst!</title>
 </head>
 

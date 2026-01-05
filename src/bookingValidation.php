@@ -12,10 +12,6 @@ final class bookingValidation
             $errors[] = 'Name is required.';
         }
 
-        if (empty($data['transfer_code'])) {
-            $errors[] = 'Transfer code is required.';
-        }
-
         if (
             empty($data['economy_checkin']) &&
             empty($data['standard_checkin']) &&
