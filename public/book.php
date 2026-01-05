@@ -221,6 +221,7 @@ try {
 
     <h3>Make sure you visit our bar <a href="/public/bolaget.php">Bolaget</a>.</h3>
     <p>E-Type will welcome you personally.</p>
+    <img src="/public/images/E-Type-welcome.png" alt="E-Type Welcoming You" style="max-width:600px;">
 
     <h4>We hope you enjoy your stay!</h4>
 </section>

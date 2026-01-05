@@ -26,7 +26,14 @@ require __DIR__ . '/../includes/header.php'; ?>
 
     <div class="welcome-container">
         <h1>Welcome to Borta bra, hemma bäst!</h1>
-        <img src="/public/images/hotel.png" alt="full view of hotel">
+        <div>
+            <img src="/public/images/hotel.png" alt="full view of hotel">
+            <h3>A place to feel at home</h3>
+            <p><b>Welcome to the New Sweden Island Resort. We have gone to great lengths to bring the modest charm of a Falu-red cottage, just as the market demand is hinting at.</b></p>
+            <p>We hope you enjoy your stay with us, though we trust you will do so with appropriate moderation. Our island offers a serene environment, and we find that guests who manage their expectations—and their enthusiasm—tend to fit in best here.</p>
+            <p>We are ready to receive you. Please try to arrive on time; the tropical sun, unlike our patience, is quite consistent.</p>
+            <p>What are you waiting for? Book your room!</p>
+        </div>
     </div>
 
     <div class="booking-container">
@@ -223,12 +230,22 @@ require __DIR__ . '/../includes/header.php'; ?>
         <section class="room-info-container">
             <article>
                 <img src="/public/images/economy-room.png" alt="Economy Room">
+                <div class="price-tag">
+                    <h3>Economy Room</h3>
+                    <p>Price: $<?php echo $roomPrices['economy']; ?> per night</p>
+                </div>
             </article>
             <article>
                 <img src="/public/images/standard-room.png" alt="Standard Room">
+                <div class="price-tag">
+                    <h3>Standard Room</h3>
+                    <p>Price: $<?php echo $roomPrices['standard']; ?> per night</p>
             </article>
             <article>
                 <img src="/public/images/luxury-room.png" alt="Luxury Room">
+                <div class="price-tag">
+                    <h3>Luxury Room</h3>
+                    <p>Price: $<?php echo $roomPrices['luxury']; ?> per night</p>
             </article>
         </section>
 
