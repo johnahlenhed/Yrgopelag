@@ -1,4 +1,7 @@
-<?php require __DIR__ . '/../includes/header.php'; ?>
+<?php 
+require_once __DIR__ . '/../config/config.php';
+require __DIR__ . '/../includes/header.php'; 
+?>
 
 <main class="bolaget-main">
     <section class="bolaget-hero">

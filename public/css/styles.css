@@ -52,6 +52,18 @@ nav img {
     height: 8rem;
 }
 
+.star-rating {
+    position: absolute;
+    top: 3rem;
+    right: 2rem;
+}
+
+.star {
+    color: gold;
+    font-size: 1.5rem;
+    margin: 0 2px;
+}
+
 main {
     width: 100%;
     display: inline-flex;
