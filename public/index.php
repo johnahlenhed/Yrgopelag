@@ -242,12 +242,14 @@ require __DIR__ . '/../includes/header.php'; ?>
                 <div class="price-tag">
                     <h3>Standard Room</h3>
                     <p>Price: $<?php echo $roomPrices['standard']; ?> per night</p>
+                </div>
             </article>
             <article>
                 <img src="/public/images/luxury-room.png" alt="Luxury Room">
                 <div class="price-tag">
                     <h3>Luxury Room</h3>
                     <p>Price: $<?php echo $roomPrices['luxury']; ?> per night</p>
+                </div>
             </article>
         </section>
 

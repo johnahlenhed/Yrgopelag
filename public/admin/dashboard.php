@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 // Update star rating
                 if (isset($response['island']['stars'])) {
-                    $stmt = $pdo->prepare('UPDATE settings SET value = :stars WHERE key = :key');
+                    $stmt = $pdo->prepare('UPDATE settings SET value = :stars WHERE `key` = :key');
                     $stmt->execute([
                         ':stars' => (string)$response['island']['stars'],
                         ':key' => 'star_rating'
@@ -77,13 +77,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         case 'update_settings':
             if (isset($_POST['stars'], $_POST['discounts'])) {
                 try {
-                    $stmt = $pdo->prepare('UPDATE settings SET value = :stars WHERE key = :key');
+                    $stmt = $pdo->prepare('UPDATE settings SET value = :stars WHERE `key` = :key');
                     $stmt->execute([
                         ':stars' => $data['stars'],
                         ':key' => 'star_rating'
                     ]);
 
-                    $stmt = $pdo->prepare('UPDATE settings SET value = :discounts WHERE key = :key');
+                    $stmt = $pdo->prepare('UPDATE settings SET value = :discounts WHERE `key` = :key');
                     $stmt->execute([
                         ':discounts' => $data['discounts'],
                         ':key' => 'loyalty_discount'
