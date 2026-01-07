@@ -193,7 +193,8 @@ try {
 <?php require __DIR__ . '/../includes/header.php'; ?>
 
 
-<section>
+<section class="booking-confirmation">
+    <div class="confirmation-container1">
     <h1>Booking Confirmation</h1>
     <p>Thank you, <?php echo htmlspecialchars($data['name']); ?>.</p>
     <p>Your booking has been confirmed.</p>
@@ -218,12 +219,17 @@ try {
             <?php endforeach; ?>
         </ul>
     <?php endif; ?>
+    </div>
 
+    <div class="confirmation-container2">
     <h3>Make sure you visit our bar <a href="/public/bolaget.php">Bolaget</a>.</h3>
     <p>E-Type will welcome you personally.</p>
     <img src="/public/images/E-Type-welcome.png" alt="E-Type Welcoming You" style="max-width:600px;">
 
     <h4>We hope you enjoy your stay!</h4>
+
+    <h2><a href="/public/index.php">Book another night!</a></h2>
+    </div>
 </section>
 
 

@@ -2,13 +2,29 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/../vendor/autoload.php';
+// Manual .env loading (no Composer/Dotenv needed)
+$envFile = __DIR__ . '/../.env';
 
-use Dotenv\Dotenv;
+if (file_exists($envFile)) {
+    $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        // Skip comments
+        if (strpos(trim($line), '#') === 0) {
+            continue;
+        }
+        
+        // Skip lines without =
+        if (strpos($line, '=') === false) {
+            continue;
+        }
+        
+        // Parse line
+        list($key, $value) = explode('=', $line, 2);
+        $_ENV[trim($key)] = trim($value, '"');
+    }
+}
 
-$dotenv = Dotenv::createImmutable(__DIR__ . '/../');
-$dotenv->load();
-
+// Enable errors in development
 if (($_ENV['APP_ENV'] ?? 'production') === 'development') {
     error_reporting(E_ALL);
     ini_set('display_errors', '1');

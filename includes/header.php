@@ -1,3 +1,12 @@
+<?php
+
+// Display star rating
+$stmt = $pdo->prepare('SELECT value FROM settings WHERE `key` = :key');
+$stmt->execute([':key' => 'star_rating']);
+$starRating = $stmt->fetchColumn();
+
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -18,5 +27,14 @@
             <a href="/public/bolaget.php">Bolaget</a>
             <a href="/public/index.php"><img src="/public/images/borta-bra-logo.png" alt="Hotel Logo" /></a>
             <a href="/public/admin/login.php">Login</a>
+
+            <?php if ($starRating): ?>
+                <div class="star-rating">
+                    <h3>Star rating:</h3>
+                    <?php for ($i = 0; $i < $starRating; $i++): ?>
+                        <span class="star">&#9733;</span>
+                    <?php endfor; ?>
+                </div>
+            <?php endif; ?>
         </nav>
     </header>
