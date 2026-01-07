@@ -7,7 +7,7 @@ declare(strict_types=1);
  */
 function getSetting(PDO $pdo, string $key): ?string
 {
-    $stmt = $pdo->prepare('SELECT value FROM settings WHERE key = :key');
+    $stmt = $pdo->prepare('SELECT value FROM settings WHERE `key` = :key');
     $stmt->execute([':key' => $key]);
     $result = $stmt->fetchColumn();
     return $result !== false ? $result : null;

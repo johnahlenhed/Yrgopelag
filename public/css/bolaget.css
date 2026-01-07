@@ -12,7 +12,7 @@
 
 .bolaget-main section {
     display: flex;
-    width: 80%;
+    width: 70%;
     padding: 4rem;
 }
 
@@ -32,13 +32,6 @@
     margin-bottom: 1.5rem;
 }
 
-.bolaget-main section img {
-    width: 30rem;
-    height: auto;
-    object-fit: cover;
-    border-radius: 5px;
-}
-
 .bolaget-hero {
     flex-direction: column;
     justify-content: center;
@@ -48,16 +41,21 @@
 }
 
 .bolaget-hero h5 {
+    font-size: 2rem;
     padding: 0 10rem 0 10rem;
 }
 
 .bolaget-hero img {
-    width: 100rem;
+    width: 50rem;
     height: auto;
 }
 
 .e-type p {
     padding-right: 4rem;
+}
+
+.e-type img {
+    width: 30rem;
 }
 
 .mis-types {
@@ -79,6 +77,10 @@
     justify-content: center;
 }
 
+.mis-types img {
+    width: 30rem;
+}
+
 .responsible-e-type div {
     display: inline-flex;
     flex-direction: column;
@@ -92,10 +94,22 @@
     object-fit: cover;
 }
 
+.responsible-e-type img {
+    width: 30rem;
+}
+
 .notice {
     flex-direction: column;
 }
 
 .notice h5 {
     font-size: 1.5rem;
+}
+
+.home-link {
+    text-decoration: underline;
+}
+
+.home-link:hover {
+    color: var(--secondary-accent-color);
 }

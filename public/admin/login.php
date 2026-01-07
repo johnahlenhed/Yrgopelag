@@ -46,4 +46,11 @@ require __DIR__ . '/../../includes/header.php'; ?>
     <button type="submit">Login</button>
 </form>
 
+<div class="login-notice">
+    <h2>Are you an admin on this website?</h2>
+    <p>You're probably not. So leave this page alone!</p>
+    <p>You might think "then why did you put the link in the navbar?".<br> Well, that's none of your business! Move along and stop making me have imaginary conversations.</p>
+    <p>Or just <a href="/public/index.php">book another night.</a></p>
+</div>
+
 <?php require __DIR__ . '/../../includes/footer.php'; ?>

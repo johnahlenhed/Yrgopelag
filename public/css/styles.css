@@ -52,6 +52,34 @@ nav img {
     height: 8rem;
 }
 
+nav a {
+    text-decoration: none;
+    color: var(--font-color);
+    font-family: var(--headings-font);
+    font-size: 1.2rem;
+    margin: 0 2rem;
+}
+
+nav a:hover {
+    color: var(--secondary-accent-color);
+}
+
+.star-rating {
+    position: absolute;
+    top: 2rem;
+    right: 8rem;
+}
+
+.star-rating h3 {
+    color: var(--background-color);
+}
+
+.star {
+    color: gold;
+    font-size: 1.5rem;
+    margin: 0 2px;
+}
+
 main {
     width: 100%;
     display: inline-flex;
@@ -72,7 +100,8 @@ main {
 .welcome-container h1 {
     font-family: var(--headings-font);
     font-size: 2.5rem;
-    margin: 1rem 0;
+    margin-top: 4rem;
+    margin-bottom: 4rem;
 }
 
 .hero {
@@ -90,10 +119,17 @@ main {
 }
 
 .welcome-text {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
     font-family: var(--body-font);
     font-size: 1rem;
-    padding: 1rem 2rem 1rem 0;
+    padding: 2rem 2rem 2rem 0;
     max-width: 40rem;
+}
+
+.welcome-text p {
+    margin-bottom: 2.5rem;
 }
 
 .booking-container {
@@ -116,7 +152,7 @@ main {
 section {
     background-color: var(--container-color);
     font-family: var(--body-font);
-    margin: 0.5rem;
+    margin: 2rem 1rem 2rem 1rem;
     padding: 1rem;
     border: var(--border-color) 2px solid;
 }
@@ -228,6 +264,10 @@ section {
     padding: 8px 0;
 }
 
+.price-line span {
+    font-size: 1.2em;
+}
+
 .total-line {
     border-top: 2px solid #333;
     padding-top: 12px;
@@ -235,11 +275,41 @@ section {
     font-size: 1.2em;
 }
 
+.discount-info h3 {
+    font-family: var(--body-font);
+    color: var(--font-color);
+    font-size: 1.1rem;
+    padding-top: 2rem;
+}
+
 .features-section {
-    color: #666;
+    color: var(--font-color);
     font-size: 0.95em;
 }
 
+.booking-confirmation {
+    display: flex;
+    flex-direction: row;
+    padding: 3rem;
+}
+
+.confirmation-container1 {
+    margin-right: 5rem;
+}
+
+.confirmation-container2 {
+    margin-left: 8rem;
+}
+
+.confirmation-container2 img {
+    border-radius: 1.5rem;
+    margin-left: 1rem;
+}
+
+.login-notice {
+    text-align: center;
+    margin-top: 10rem;
+}
 
 footer {
     background-color: var(--accent-color);
@@ -254,5 +324,7 @@ footer img {
 }
 
 footer p {
+    font-family: var(--body-font);
+    font-size: 1rem;
     margin: 0;
 }

@@ -1,0 +1,15 @@
+# .htaccess in root (/webroots/813f8058/.htaccess)
+
+# Security
+<Files .env>
+    Require all denied
+</Files>
+
+# Prevent directory browsing
+Options -Indexes
+
+# UTF-8 encoding
+AddDefaultCharset UTF-8
+
+# Default file
+DirectoryIndex index.php
