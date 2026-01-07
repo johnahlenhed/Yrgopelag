@@ -29,9 +29,9 @@ require __DIR__ . '/../includes/header.php'; ?>
         <div class="hero">
             <img src="/public/images/hotel.png" alt="full view of hotel">
             <div class="welcome-text">
-                <h3>A place to feel at home</h3>
+                <h2>A place to feel at home</h2>
                 <p><b>Welcome to the New Sweden Island Resort. We have gone to great lengths to bring the modest charm of a Falu-red cottage, just as the market demand is hinting at.</b></p>
-                <p>We hope you enjoy your stay with us, though we trust you will do so with appropriate moderation. Our island offers a serene environment, and we find that guests who manage their expectations—and their enthusiasm—tend to fit in best here.</p>
+                <p>We hope you enjoy your stay with us, though we trust you will do so with appropriate moderation. Our four star hotel offers a serene environment, and we find that guests who manage their expectations—and their enthusiasm—tend to fit in best here.</p>
                 <p>We are ready to receive you. Please try to arrive on time; the tropical sun, unlike our patience, is quite consistent.</p>
                 <p>What are you waiting for? Book your room!</p>
             </div>
@@ -225,7 +225,7 @@ require __DIR__ . '/../includes/header.php'; ?>
                 </div>
             </div>
             <div class="discount-info">
-                <h5>Are you a returning customer? Then you'll get a <?php echo $loyaltyDiscount; ?>% discount!</h5>
+                <h3>Are you a returning customer? Then you'll get a <?php echo $loyaltyDiscount; ?>% discount!</h3>
             </div>
         </div>
 

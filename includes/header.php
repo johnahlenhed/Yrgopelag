@@ -30,6 +30,7 @@ $starRating = $stmt->fetchColumn();
 
             <?php if ($starRating): ?>
                 <div class="star-rating">
+                    <h3>Star rating:</h3>
                     <?php for ($i = 0; $i < $starRating; $i++): ?>
                         <span class="star">&#9733;</span>
                     <?php endfor; ?>

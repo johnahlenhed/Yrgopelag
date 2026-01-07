@@ -1,6 +1,6 @@
-<?php 
+<?php
 require_once __DIR__ . '/../config/config.php';
-require __DIR__ . '/../includes/header.php'; 
+require __DIR__ . '/../includes/header.php';
 ?>
 
 <main class="bolaget-main">
@@ -24,10 +24,10 @@ require __DIR__ . '/../includes/header.php';
         <div class="mis-types-container1">
             <h3>Our very own little Mis-Types</h3>
 
-            <p>E-Type is assisted by our very own little Mis-Types. They are all orphans, which we mention not for sympathy,
-                but for transparency.</p>
-
             <img src="/public//images/mis-types-chilling.png" alt="Mis-Types chilling in the backyard">
+
+            <p><b>E-Type is assisted by our very own little Mis-Types. They are all orphans, which we mention not for sympathy,
+                    but for transparency.</b></p>
 
             <p>Raised entirely by the hotel, the Mis-Types have been carefully trained in beverage observation,
                 disappointment management, and reporting procedures. Their dedication to informing guests about the
@@ -35,17 +35,14 @@ require __DIR__ . '/../includes/header.php';
 
         </div>
         <div class="mis-types-container2">
+
+            <img src="/public/images/mis-types.png" alt="Mis-Types at the bar">
+
             <p>
                 Should a guest display early signs of joy, confidence, or karaoke ambitions, the Mis-Types are
                 authorized to calmly take notes and, if necessary, inform Transportstyrelsen immediately.
             </p>
 
-            <img src="/public/images/mis-types.png" alt="Mis-Types at the bar">
-
-            <p>
-                This is done out of care.
-                Mostly for society.
-            </p>
         </div>
     </section>
 
@@ -90,6 +87,10 @@ require __DIR__ . '/../includes/header.php';
             <p>
                 You're one of the lucky ones! Getting a type-hair, wether from E-Type himself or one of our very own little Mis-Types, is considered a sign of good luck and prosperity here in New Sweden.
             </p>
+        </div>
+        <div>
+            <h5>Who cares?</h5>
+            <p>No one cares! So stop asking questions and <b><a href="/public/index.php" class="home-link">book another night!</a></b></p>
         </div>
     </section>
 
