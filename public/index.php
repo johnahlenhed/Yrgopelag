@@ -200,7 +200,6 @@ require __DIR__ . '/../includes/header.php'; ?>
                             Your centralbank API Key
                             <input type="password" name="guest_api_key" id="guest_api_key" placeholder="Enter your Centralbank API Key">
                         </label>
-                        <p class="helper-text">Amount needed: <strong>$<span id="total-amount-display">0</span></strong></p>
                     </div>
                 </fieldset>
 
@@ -226,6 +225,7 @@ require __DIR__ . '/../includes/header.php'; ?>
             </div>
             <div class="discount-info">
                 <h3>Are you a returning customer? Then you'll get a <?php echo $loyaltyDiscount; ?>% discount!</h3>
+                <p>Discounted price: $<span id="discounted-price-display">0</span></p>
             </div>
         </div>
 
@@ -338,6 +338,7 @@ require __DIR__ . '/../includes/header.php'; ?>
         const featuresPriceDisplay = document.getElementById('features-price-display');
         const totalPriceDisplay = document.getElementById('total-price-display');
         const featuresSection = document.querySelector('.features-section');
+        const discountedPriceDisplay = document.getElementById('discounted-price-display');
 
         let featuresTotal = 0;
         document.querySelectorAll('.feature-checkbox:checked').forEach(checkbox => {
@@ -353,6 +354,14 @@ require __DIR__ . '/../includes/header.php'; ?>
         if (featuresTotal > 0) {
             featuresSection.style.display = 'flex';
             featuresPriceDisplay.textContent = `$${featuresTotal}`;
+        }
+
+        if (selectedRoomPrice > 0 || featuresTotal > 0) {
+            const total = selectedRoomPrice + featuresTotal;
+            const loyaltyDiscount = <?php echo $loyaltyDiscount; ?>;
+            const discountedTotal = Math.floor(total - (total * loyaltyDiscount / 100));
+            discountedPriceDisplay.textContent = `${discountedTotal}`;
+
         } else {
             featuresSection.style.display = 'none';
             featuresPriceDisplay.textContent = '$0';
