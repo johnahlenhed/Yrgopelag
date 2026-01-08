@@ -1,0 +1,84 @@
+.feature-category {
+    margin-bottom: 30px;
+}
+
+.feature-category h3 {
+    color: #005293;
+    border-bottom: 2px solid #FFCD00;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+.feature-item {
+    margin-bottom: 15px;
+    padding: 15px;
+    background: var(--interaction-color);
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+}
+
+.feature-item legend {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+}
+
+.tier-badge {
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-weight: normal;
+    text-transform: uppercase;
+}
+
+.tier-economy {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.tier-basic {
+    background: #d4edda;
+    color: #155724;
+}
+
+.tier-premium {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.tier-superior {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.feature-controls {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.feature-controls label {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.checkbox-label {
+    flex-direction: row !important;
+    align-items: center;
+    gap: 8px !important;
+}
+
+.feature-controls input[type="number"] {
+    width: 100px;
+    padding: 8px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+}
+
+.feature-controls input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+}
