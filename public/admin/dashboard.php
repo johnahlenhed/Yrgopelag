@@ -241,22 +241,67 @@ require __DIR__ . '/../../includes/header.php';
     <form method="POST">
         <input type="hidden" name="action" value="update_features">
 
-        <?php foreach ($features as $feature): ?>
-            <fieldset>
-                <legend><?php echo htmlspecialchars($feature['name']); ?></legend>
+        <?php 
+        // Group features by category
+        $groupedFeatures = [];
+        foreach ($features as $feature) {
+            $category = $feature['category'];
+            if (!isset($groupedFeatures[$category])) {
+                $groupedFeatures[$category] = [];
+            }
+            $groupedFeatures[$category][] = $feature;
+        }
+        
+        // Sort each category by tier (economy -> basic -> premium -> superior)
+        $tierOrder = ['economy' => 1, 'basic' => 2, 'premium' => 3, 'superior' => 4];
+        foreach ($groupedFeatures as $category => $categoryFeatures) {
+            usort($categoryFeatures, function($a, $b) use ($tierOrder) {
+                return ($tierOrder[$a['tier']] ?? 99) <=> ($tierOrder[$b['tier']] ?? 99);
+            });
+            $groupedFeatures[$category] = $categoryFeatures;
+        }
+        
+        // Display order for categories
+        $categoryOrder = ['water', 'games', 'wheels', 'hotel-specific'];
+        $categoryLabels = [
+            'water' => '💧 Water Activities',
+            'games' => '🎮 Games',
+            'wheels' => '🚲 Wheels',
+            'hotel-specific' => '🏨 Hotel-Specific'
+        ];
+        ?>
 
-                <input type="hidden" name="feature_ids[]" value="<?php echo (int)$feature['id']; ?>">
+        <?php foreach ($categoryOrder as $category): ?>
+            <?php if (isset($groupedFeatures[$category])): ?>
+                <div class="feature-category">
+                    <h3><?php echo $categoryLabels[$category]; ?></h3>
+                    
+                    <?php foreach ($groupedFeatures[$category] as $feature): ?>
+                        <fieldset class="feature-item">
+                            <legend>
+                                <?php echo htmlspecialchars(ucwords(str_replace('_', ' ', $feature['name']))); ?>
+                                <span class="tier-badge tier-<?php echo $feature['tier']; ?>">
+                                    <?php echo ucfirst($feature['tier']); ?>
+                                </span>
+                            </legend>
 
-                <label>
-                    Price
-                    <input type="number" name="prices[]" value="<?php echo (int)$feature['price']; ?>" min="0">
-                </label>
+                            <input type="hidden" name="feature_ids[]" value="<?php echo (int)$feature['id']; ?>">
 
-                <label>
-                    Enabled
-                    <input type="checkbox" name="availabilities[]" value="<?php echo (int)$feature['id']; ?>" <?php echo $feature['is_active'] ? 'checked' : ''; ?>>
-                </label>
-            </fieldset>
+                            <div class="feature-controls">
+                                <label>
+                                    Price ($)
+                                    <input type="number" name="prices[]" value="<?php echo (int)$feature['price']; ?>" min="0" max="100">
+                                </label>
+
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="availabilities[]" value="<?php echo (int)$feature['id']; ?>" <?php echo $feature['is_active'] ? 'checked' : ''; ?>>
+                                    <span>Enabled</span>
+                                </label>
+                            </div>
+                        </fieldset>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
         <?php endforeach; ?>
 
         <button type="submit">Update All Features</button>

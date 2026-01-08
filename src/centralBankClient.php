@@ -18,39 +18,60 @@ final class CentralBankClient
     private function post(string $endpoint, array $payload): array
     {
         $url = $this->baseUrl . $endpoint;
-        error_log("POST to: " . $url);
-        error_log("Payload: " . json_encode($payload, JSON_PRETTY_PRINT));
+        $maxRetries = 3;
+        $retryDelay = 1;
+        
+        for ($attempt = 1; $attempt <= $maxRetries; $attempt++) {
+            error_log("POST to: " . $url . " (attempt {$attempt}/{$maxRetries})");
+            error_log("Payload: " . json_encode($payload, JSON_PRETTY_PRINT));
 
-        $ch = curl_init($url);
+            $ch = curl_init($url);
 
-        curl_setopt_array($ch, [
-            CURLOPT_POST => true,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
-            CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
-        ]);
+            curl_setopt_array($ch, [
+                CURLOPT_POST => true,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
+                CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
+                CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,  // Force HTTP/1.1
+                CURLOPT_TIMEOUT => 60,
+                CURLOPT_CONNECTTIMEOUT => 20,
+                CURLOPT_SSL_VERIFYPEER => true,
+                CURLOPT_FOLLOWLOCATION => true,
+            ]);
 
-        $response = curl_exec($ch);
+            $response = curl_exec($ch);
 
-        if ($response === false) {
-            $error = curl_error($ch);
+            if ($response === false) {
+                $error = curl_error($ch);
+                curl_close($ch);
+                
+                // If this was the last attempt, throw the error
+                if ($attempt === $maxRetries) {
+                    throw new RuntimeException('cURL error after ' . $maxRetries . ' attempts: ' . $error);
+                }
+                
+                // Otherwise, log and retry
+                error_log("cURL error on attempt {$attempt}: {$error}. Retrying in {$retryDelay}s...");
+                sleep($retryDelay);
+                continue;
+            }
+
+            $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             curl_close($ch);
-            throw new RuntimeException('cURL error: ' . $error);
+
+            error_log("Response status: " . $status);
+            error_log("Response body: " . $response);
+
+            $data = json_decode($response, true);
+
+            if ($status >= 400) {
+                throw new RuntimeException($data['error'] ?? 'Centralbank error', $status);
+            }
+
+            return $data ?? [];
         }
-
-        $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-
-        error_log("Response status: " . $status);
-        error_log("Response body: " . $response);
-
-        $data = json_decode($response, true);
-
-        if ($status >= 400) {
-            throw new RuntimeException($data['error'] ?? 'Centralbank error', $status);
-        }
-
-        return $data ?? [];
+        
+        throw new RuntimeException('Failed to connect to Centralbank after ' . $maxRetries . ' attempts');
     }
 
     public function validateTransferCode(string $transferCode, int $totalCost): void
