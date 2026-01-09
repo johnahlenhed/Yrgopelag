@@ -81,3 +81,13 @@ The hotel integrates with the Yrgopelag Central Bank API:
 - Course: Programmering & Datakällor
 - Assignment: Yrgopelag
 - Central Bank: https://www.yrgopelag.se/centralbank/
+
+## Code review
+- Index.php redirects to another index.php, it's not optimal to have files with the same adress. It will effect SEO.
+- Public/index.php file is very long, try seperating large blocks of code in seperate files, such as the javascript block.
+- Public/book.php:20-28 Do you ever clean these variables from potential harmful code? Dont forget to use functions like trim() and htmlspecialchars() on all user inputs before saving them to a variable
+- Public/book.php:52-54 This code snippet only allows bookings for 1 night only, guests may want to stay for longer.
+- Public/book.php:193-236 This works but it's good practice to seperate frontend from backend. Perhaps have a redirect to a frontend page with the appropriate result from the code.
+- Database/schema.db:34-53 Interesting approach to features, a bit complicated as opposed to just entering your active features.
+- Public/css/styles.css:296-307 Try using more descriptive names for classes, perhaps something like confirmation-container-middle instead
+- 
