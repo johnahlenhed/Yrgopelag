@@ -81,3 +81,12 @@ The hotel integrates with the Yrgopelag Central Bank API:
 - Course: Programmering & Datakällor
 - Assignment: Yrgopelag
 - Central Bank: https://www.yrgopelag.se/centralbank/
+
+## Code Review
+- You have 2 index.php files, the root redirects to the public/index.php. This is an okay safety measure but its better to set the webroot to /public instead when possible. This solution isn't 100% secure and it can affect SEO and loadtimes.
+- Public/index.php file is very large, try to seperate large blocks of code into several files. For example the javascript block should be its own file.
+- Tiny tip, I see you type '<?php echo' a lot, '<?=' is the short version. It looks cleaner and is faster to write.
+- Public/book.php:20-28 Are these inputs ever cleaned before they're used? Dont forget to use sanitization functions like trim() and htmlspecialchars()
+- Public/book.php:52-54 This code makes it impossible to book a stay thats longer than 1 day, I see that your backend also only looks for arrival date to see if a room is booked or not. Datetime can be used to calculate days between two dates with the built in ->diff() function and a simple <= and >= works to check avaliabilty over multiple day bookings
+- Public/book.php:180-189 You send the 'receipt' after taking payment and inserting the stay into your database but the receipt api endpoint checks if the guest is already booked into a diffrent hotel on the same day so it can throw a fatal error which should abort the booking. So it's possible that you've stolen money from guests and they never got the points for the stay
+- styles.css could use some better names for elements, more descriptive. '.confirmation-container' 1 and 2 isn't saying very much. Also you're missing 'box-sizing: border-box', that makes it much easier to set the layout.
