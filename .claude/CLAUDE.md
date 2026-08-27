@@ -12,7 +12,7 @@ The booking/payment flow (`public/book.php`) is rollback-safe: Centralbank has n
 ## Known follow-ups
 - Production (MySQL, one.com) still needs the schema migration applied manually: `status`/`transfer_code` columns plus a unique index on `bookings(room_type, arrival_date)`. See `database/schema.sql` for the SQLite version already applied locally.
 - Bookings can end up with `status = 'payment_failed'` if a deposit fails after money already moved. There's no admin UI to see/resolve these yet — currently only visible via a direct DB query or the error log.
-- The admin password hash in `.env` still corresponds to the original weak password (`adminpassword123`); only its storage format was fixed. Worth rotating to something stronger.
+- The admin password hash in `.env` still corresponds to the original weak default password from before this pass; only its storage format was fixed (bcrypt hash instead of plaintext). Worth rotating to something stronger — regenerate with `php -r 'echo password_hash("your-new-password", PASSWORD_DEFAULT), PHP_EOL;'` and update `ADMIN_PASSWORD_HASH` in `.env`.
 
 ## Agents
 - `security-improver` — scans for security risks and vulnerabilities specifically.
