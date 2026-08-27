@@ -2,32 +2,37 @@
 
 declare(strict_types=1);
 
-// Manual .env loading (no Composer/Dotenv needed)
-$envFile = __DIR__ . '/../.env';
+require_once __DIR__ . '/../vendor/autoload.php';
 
-if (file_exists($envFile)) {
-    $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-    foreach ($lines as $line) {
-        // Skip comments
-        if (strpos(trim($line), '#') === 0) {
-            continue;
-        }
-        
-        // Skip lines without =
-        if (strpos($line, '=') === false) {
-            continue;
-        }
-        
-        // Parse line
-        list($key, $value) = explode('=', $line, 2);
-        $_ENV[trim($key)] = trim($value, '"');
-    }
-}
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/..');
+$dotenv->safeLoad();
 
 // Enable errors in development
 if (($_ENV['APP_ENV'] ?? 'production') === 'development') {
     error_reporting(E_ALL);
     ini_set('display_errors', '1');
+} else {
+    ini_set('display_errors', '0');
+}
+
+// Security headers
+header('X-Content-Type-Options: nosniff');
+header('X-Frame-Options: DENY');
+header("Content-Security-Policy: frame-ancestors 'none'");
+header('Referrer-Policy: no-referrer-when-downgrade');
+
+require_once __DIR__ . '/csrf.php';
+
+// Secure session (hardened cookie params, started once per request)
+if (session_status() === PHP_SESSION_NONE) {
+    session_set_cookie_params([
+        'lifetime' => 0,
+        'path' => '/',
+        'secure' => ($_ENV['APP_ENV'] ?? 'production') !== 'development',
+        'httponly' => true,
+        'samesite' => 'Strict',
+    ]);
+    session_start();
 }
 
 // Database connection - works with both SQLite and MySQL

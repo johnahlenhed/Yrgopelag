@@ -27,7 +27,12 @@ $starRating = $stmt->fetchColumn();
         <nav>
             <a href="/public/bolaget.php">Bolaget</a>
             <a href="/public/index.php"><img src="/public/images/borta-bra-logo.png" alt="Hotel Logo" /></a>
-            <a href="/public/admin/login.php">Login</a>
+            <?php if (!empty($_SESSION['is_admin'])): ?>
+                <a href="/public/admin/dashboard.php">Admin</a>
+                <a href="/public/admin/logout.php">Logout</a>
+            <?php else: ?>
+                <a href="/public/admin/login.php">Login</a>
+            <?php endif; ?>
 
             <?php if ($starRating): ?>
                 <div class="star-rating">

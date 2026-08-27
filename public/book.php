@@ -17,6 +17,13 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
+header('Cache-Control: no-store');
+
+if (!csrfVerify($_POST['csrf_token'] ?? null)) {
+    http_response_code(403);
+    exit('Your session expired. Please go back and submit the form again.');
+}
+
 $data = [
     'economy_checkin' => $_POST['economy_checkin'] ?? null,
     'standard_checkin' => $_POST['standard_checkin'] ?? null,
@@ -49,8 +56,7 @@ if (count($selectedRooms) !== 1) {
 
 $roomType = array_key_first($selectedRooms);
 
-$checkinTime = new DateTime('15:00');
-$arrival = new DateTime($data[$roomType . '_checkin'] . ' ' . $checkinTime->format('H:i'));
+$arrival = DateTime::createFromFormat('Y-m-d H:i', $data[$roomType . '_checkin'] . ' 15:00');
 $departure = (clone $arrival)->modify('+20 hours');
 
 // Check availability
@@ -61,6 +67,10 @@ if (bookingRepository::isDateBooked($pdo, $roomType, $arrival)) {
 
 // Validate and fetch features
 $features = $_POST['features'] ?? [];
+if (!is_array($features)) {
+    http_response_code(400);
+    exit('Invalid features submitted.');
+}
 $featureRows = featureRepository::getByNames($pdo, $features);
 
 // Validate that all features are active
@@ -102,7 +112,17 @@ if ($data['payment_method'] === 'service') {
         http_response_code(400);
         exit('API key is required for TransferCode Service.');
     }
-    
+
+    // Throttle Centralbank credential attempts from this session.
+    $attempts = $_SESSION['cb_service_attempts'] ?? [];
+    $attempts = array_filter($attempts, fn($t) => $t > time() - 60);
+    if (count($attempts) >= 10) {
+        http_response_code(429);
+        exit('Too many attempts. Please wait a minute and try again.');
+    }
+    $attempts[] = time();
+    $_SESSION['cb_service_attempts'] = $attempts;
+
     try {
         // Create transferCode using guest's API key
         $transferCode = $cb->createTransferCodeForGuest(
@@ -117,8 +137,9 @@ if ($data['payment_method'] === 'service') {
         $usedTransferCodeService = true;
         
     } catch (RuntimeException $e) {
+        error_log('Failed to create transfer code: ' . $e->getMessage());
         http_response_code(400);
-        exit('Failed to create transfer code: ' . htmlspecialchars($e->getMessage()));
+        exit('Failed to create a transfer code. Please check your API key and try again.');
     }
     
 } else {
@@ -133,8 +154,9 @@ if ($data['payment_method'] === 'service') {
     try {
         $cb->validateTransferCode($transferCode, $totalPrice);
     } catch (RuntimeException $e) {
+        error_log('Invalid transfer code: ' . $e->getMessage());
         http_response_code(400);
-        exit('Invalid transfer code: ' . htmlspecialchars($e->getMessage()));
+        exit('That transfer code could not be validated. Please double-check it and try again.');
     }
 }
 
@@ -161,8 +183,9 @@ try {
 try {
     $cb->deposit($transferCode);
 } catch (RuntimeException $e) {
+    error_log('Deposit to hotel account failed: ' . $e->getMessage());
     http_response_code(400);
-    exit('Payment failed: ' . htmlspecialchars($e->getMessage()));
+    exit('Payment failed. Please contact us if you believe this is a mistake.');
 }
 
 // Send receipt to Central Bank

@@ -2,32 +2,44 @@
 
 declare(strict_types=1);
 
-session_start();
-
-// Force logout & session reset when visiting login page
-session_unset();        // Clear session variables
-session_destroy();     // Destroy session data
-session_regenerate_id(true); // Prevent session fixation
-session_start();       // Start a fresh session
-
 require_once __DIR__ . '/../../config/config.php';
 
+// Already authenticated: skip the form entirely.
 if (!empty($_SESSION['is_admin'])) {
     header('Location: /public/admin/dashboard.php');
     exit();
 }
 
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOCKOUT_SECONDS = 60;
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $lockedUntil = $_SESSION['login_locked_until'] ?? 0;
 
-    $password = $_POST['password'] ?? '';
+    if (time() < $lockedUntil) {
+        $error = 'Too many failed attempts. Please try again in a minute.';
+    } elseif (!csrfVerify($_POST['csrf_token'] ?? null)) {
+        $error = 'Your session expired. Please try again.';
+    } else {
+        $password = $_POST['password'] ?? '';
+        $passwordHash = $_ENV['ADMIN_PASSWORD_HASH'] ?? '';
 
-    if ($password === ($_ENV['ADMIN_PASSWORD'] ?? '')) {
-        $_SESSION['is_admin'] = true;
-        header('Location: /public/admin/dashboard.php');
-        exit();
-    }
+        if ($passwordHash !== '' && password_verify($password, $passwordHash)) {
+            $_SESSION['login_attempts'] = 0;
+            $_SESSION['is_admin'] = true;
+            session_regenerate_id(true); // Prevent session fixation
+            header('Location: /public/admin/dashboard.php');
+            exit();
+        }
+
+        $_SESSION['login_attempts'] = ($_SESSION['login_attempts'] ?? 0) + 1;
+        if ($_SESSION['login_attempts'] >= MAX_LOGIN_ATTEMPTS) {
+            $_SESSION['login_locked_until'] = time() + LOCKOUT_SECONDS;
+            $_SESSION['login_attempts'] = 0;
+        }
 
         $error = 'Invalid password.';
+    }
 }
 
 require __DIR__ . '/../../includes/header.php'; ?>
@@ -39,6 +51,7 @@ require __DIR__ . '/../../includes/header.php'; ?>
 <?php endif; ?>
 
 <form method="POST">
+    <?php echo csrfField(); ?>
     <label>
         Password:
         <input type="password" name="password" required>

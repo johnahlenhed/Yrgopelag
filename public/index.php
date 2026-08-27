@@ -41,6 +41,7 @@ require __DIR__ . '/../includes/header.php'; ?>
     <div class="booking-container">
         <section>
             <form method="POST" action="/public/book.php" class="booking-form">
+                <?php echo csrfField(); ?>
 
                 <fieldset class="economy-room">
                     <legend>Economy</legend>
@@ -198,7 +199,7 @@ require __DIR__ . '/../includes/header.php'; ?>
                         </div>
                         <label>
                             Your centralbank API Key
-                            <input type="password" name="guest_api_key" id="guest_api_key" placeholder="Enter your Centralbank API Key">
+                            <input type="password" name="guest_api_key" id="guest_api_key" placeholder="Enter your Centralbank API Key" autocomplete="off">
                         </label>
                     </div>
                 </fieldset>

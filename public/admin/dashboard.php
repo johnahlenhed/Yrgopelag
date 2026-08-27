@@ -2,8 +2,6 @@
 
 declare(strict_types=1);
 
-session_start();
-
 require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../src/featureRepository.php';
 require_once __DIR__ . '/../../src/centralBankClient.php';
@@ -20,13 +18,18 @@ if (!isset($_SESSION['is_admin']) || $_SESSION['is_admin'] !== true) {
 $successMessage = '';
 $errorMessage = '';
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !csrfVerify($_POST['csrf_token'] ?? null)) {
+    http_response_code(403);
+    exit('Invalid or expired form submission. Please go back and try again.');
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $data = [
-        'stars' => $_POST['stars'] ?? null,
-        'discounts' => $_POST['discounts'] ?? null,
-        'economy_price' => $_POST['economy_price'] ?? null,
-        'standard_price' => $_POST['standard_price'] ?? null,
-        'luxury_price' => $_POST['luxury_price'] ?? null,
+        'stars' => max(1, min(5, (int)($_POST['stars'] ?? 0))),
+        'discounts' => max(0, min(100, (int)($_POST['discounts'] ?? 0))),
+        'economy_price' => max(0, (int)($_POST['economy_price'] ?? 0)),
+        'standard_price' => max(0, (int)($_POST['standard_price'] ?? 0)),
+        'luxury_price' => max(0, (int)($_POST['luxury_price'] ?? 0)),
     ];
 
     switch ($_POST['action'] ?? null) {
@@ -34,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
                 $response = $cb->getIslandFeatures();
 
-                error_log("Centralbank island data: " . json_encode($response, JSON_PRETTY_PRINT));
+                error_log("Centralbank island data fetched: " . count($response['features'] ?? []) . " feature(s)");
 
                 // Update star rating
                 if (isset($response['island']['stars'])) {
@@ -147,8 +150,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 try {
     $features = featureRepository::getAllFeatures($pdo);
-    error_log("Features count: " . count($features));
-    error_log("Features: " . print_r($features, true));
 } catch (Exception $e) {
     error_log("Error fetching features: " . $e->getMessage());
     $features = [];
@@ -180,6 +181,7 @@ require __DIR__ . '/../../includes/header.php';
         Current: <?php echo $currentStars; ?> | Discount: <?php echo $currentDiscount; ?>%
     </p>
     <form method="POST">
+        <?php echo csrfField(); ?>
         <input type="hidden" name="action" value="update_settings">
 
         <label>
@@ -205,6 +207,7 @@ require __DIR__ . '/../../includes/header.php';
 <section>
     <h2>Room Prices</h2>
     <form method="POST">
+        <?php echo csrfField(); ?>
         <input type="hidden" name="action" value="update_rooms">
 
         <label>
@@ -239,6 +242,7 @@ require __DIR__ . '/../../includes/header.php';
 <section>
     <h2>Features</h2>
     <form method="POST">
+        <?php echo csrfField(); ?>
         <input type="hidden" name="action" value="update_features">
 
         <?php 
@@ -280,7 +284,7 @@ require __DIR__ . '/../../includes/header.php';
                         <fieldset class="feature-item">
                             <legend>
                                 <?php echo htmlspecialchars(ucwords(str_replace('_', ' ', $feature['name']))); ?>
-                                <span class="tier-badge tier-<?php echo $feature['tier']; ?>">
+                                <span class="tier-badge tier-<?php echo htmlspecialchars($feature['tier']); ?>">
                                     <?php echo ucfirst($feature['tier']); ?>
                                 </span>
                             </legend>
@@ -312,6 +316,7 @@ require __DIR__ . '/../../includes/header.php';
     <h2>Centralbanken</h2>
 
     <form method="POST" style="display: inline-block; margin-right: 10px;">
+        <?php echo csrfField(); ?>
         <input type="hidden" name="action" value="fetch_from_centralbank">
         <button type="submit" style="background-color: #18d41eff;">Fetch from Centralbank</button>
     </form>
