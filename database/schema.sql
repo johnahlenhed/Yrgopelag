@@ -18,8 +18,19 @@ CREATE TABLE bookings (
     arrival_date TEXT NOT NULL,
     departure_date TEXT NOT NULL,
     total_price INTEGER NOT NULL,
+    -- 'pending': row reserved, payment not yet confirmed with Centralbank.
+    -- 'confirmed': deposit() succeeded, payment complete.
+    -- 'payment_failed': money left the guest (or was validated) but deposit() failed;
+    --   Centralbank has no refund/reversal endpoint, so these need manual follow-up
+    --   rather than being deleted -- the transfer_code is kept for that purpose.
+    status TEXT NOT NULL DEFAULT 'pending',
+    transfer_code TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Prevents two bookings from racing onto the same room/date (belt-and-braces
+-- alongside the application-level availability check).
+CREATE UNIQUE INDEX idx_bookings_room_arrival ON bookings(room_type, arrival_date);
 
 CREATE TABLE features (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

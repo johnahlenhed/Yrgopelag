@@ -370,8 +370,6 @@ require __DIR__ . '/../includes/header.php'; ?>
 
         const total = selectedRoomPrice + featuresTotal;
         totalPriceDisplay.textContent = `$${total}`;
-
-        document.getElementById('total-amount-display').textContent = total;
     }
 
     updatePriceDisplay();

@@ -5,10 +5,12 @@ declare(strict_types=1);
 require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../src/featureRepository.php';
 require_once __DIR__ . '/../../src/centralBankClient.php';
+require_once __DIR__ . '/../../src/AdminDashboardService.php';
 require_once __DIR__ . '/../../config/helpers.php';
 
 $centralBankConfig = require __DIR__ . '/../../config/centralbank.php';
 $cb = new centralBankClient($centralBankConfig);
+$dashboardService = new AdminDashboardService($pdo, $cb);
 
 if (!isset($_SESSION['is_admin']) || $_SESSION['is_admin'] !== true) {
     header('Location: login.php');
@@ -24,127 +26,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !csrfVerify($_POST['csrf_token'] ??
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $data = [
-        'stars' => max(1, min(5, (int)($_POST['stars'] ?? 0))),
-        'discounts' => max(0, min(100, (int)($_POST['discounts'] ?? 0))),
-        'economy_price' => max(0, (int)($_POST['economy_price'] ?? 0)),
-        'standard_price' => max(0, (int)($_POST['standard_price'] ?? 0)),
-        'luxury_price' => max(0, (int)($_POST['luxury_price'] ?? 0)),
-    ];
+    $result = match ($_POST['action'] ?? null) {
+        'fetch_from_centralbank' => $dashboardService->fetchFromCentralbank(),
+        'update_settings' => isset($_POST['stars'], $_POST['discounts'])
+            ? $dashboardService->updateSettings((int)$_POST['stars'], (int)$_POST['discounts'])
+            : null,
+        'update_rooms' => isset($_POST['economy_price'], $_POST['standard_price'], $_POST['luxury_price'])
+            ? $dashboardService->updateRooms(
+                (int)$_POST['economy_price'],
+                (int)$_POST['standard_price'],
+                (int)$_POST['luxury_price']
+            )
+            : null,
+        'update_features' => isset($_POST['feature_ids']) && is_array($_POST['feature_ids'])
+            ? $dashboardService->updateFeatures($_POST['feature_ids'], $_POST['prices'] ?? [], $_POST['availabilities'] ?? [])
+            : null,
+        default => null,
+    };
 
-    switch ($_POST['action'] ?? null) {
-        case 'fetch_from_centralbank':
-            try {
-                $response = $cb->getIslandFeatures();
-
-                error_log("Centralbank island data fetched: " . count($response['features'] ?? []) . " feature(s)");
-
-                // Update star rating
-                if (isset($response['island']['stars'])) {
-                    $stmt = $pdo->prepare('UPDATE settings SET value = :stars WHERE `key` = :key');
-                    $stmt->execute([
-                        ':stars' => (string)$response['island']['stars'],
-                        ':key' => 'star_rating'
-                    ]);
-                }
-
-                // Sync features
-                $centralBankFeatures = $response['features'] ?? [];
-                $localFeatures = featureRepository::getAllFeatures($pdo);
-
-                $activeFeatures = [];
-                foreach ($centralBankFeatures as $feature) {
-                    $key = $feature['activity'] . '_' . $feature['tier'];
-                    $activeFeatures[$key] = true;
-                }
-
-                // Update local database based on Centralbank data
-                foreach ($localFeatures as $localFeature) {
-                    $key = $localFeature['activity'] . '_' . $localFeature['tier'];
-                    $isActive = isset($activeFeatures[$key]);
-
-                    featureRepository::updateFeature(
-                        $pdo,
-                        (int)$localFeature['id'],
-                        (int)$localFeature['price'],
-                        $isActive
-                    );
-                }
-                $successMessage = 'Data fetched from Centralbank and local database updated.';
-            } catch (Exception $e) {
-                error_log("Centralbank fetch error: " . $e->getMessage());
-                $errorMessage = 'Error fetching from Centralbank: ' . htmlspecialchars($e->getMessage());
-            }
-            break;
-
-        case 'update_settings':
-            if (isset($_POST['stars'], $_POST['discounts'])) {
-                try {
-                    $stmt = $pdo->prepare('UPDATE settings SET value = :stars WHERE `key` = :key');
-                    $stmt->execute([
-                        ':stars' => $data['stars'],
-                        ':key' => 'star_rating'
-                    ]);
-
-                    $stmt = $pdo->prepare('UPDATE settings SET value = :discounts WHERE `key` = :key');
-                    $stmt->execute([
-                        ':discounts' => $data['discounts'],
-                        ':key' => 'loyalty_discount'
-                    ]);
-                    $successMessage = 'Hotel info updated successfully.';
-                } catch (PDOException $e) {
-                    $errorMessage = 'Error updating hotel info: ' . htmlspecialchars($e->getMessage());
-                }
-            }
-            break;
-
-        case 'update_rooms':
-            if (isset($_POST['economy_price'], $_POST['standard_price'], $_POST['luxury_price'])) {
-                try {
-                    $stmt = $pdo->prepare('UPDATE rooms SET price = :price WHERE type = :type');
-
-                    $stmt->execute([
-                        ':price' => $data['economy_price'],
-                        ':type' => 'economy'
-                    ]);
-
-                    $stmt->execute([
-                        ':price' => $data['standard_price'],
-                        ':type' => 'standard'
-                    ]);
-
-                    $stmt->execute([
-                        ':price' => $data['luxury_price'],
-                        ':type' => 'luxury'
-                    ]);
-
-                    $successMessage = 'Room prices updated successfully.';
-                } catch (PDOException $e) {
-                    $errorMessage = 'Error updating room prices: ' . htmlspecialchars($e->getMessage());
-                }
-            }
-            break;
-
-        case 'update_features':
-            if (isset($_POST['feature_ids']) && is_array($_POST['feature_ids'])) {
-                try {
-                    $featureIds = $_POST['feature_ids'];
-                    $prices = $_POST['prices'] ?? [];
-                    $availabilities = $_POST['availabilities'] ?? [];
-
-                    foreach ($featureIds as $index => $featureId) {
-                        $price = (int)($prices[$index] ?? 0);
-                        $enabled = in_array($featureId, $availabilities);
-
-                        featureRepository::updateFeature($pdo, (int)$featureId, $price, $enabled);
-                    }
-
-                    $successMessage = 'All features updated successfully.';
-                } catch (PDOException $e) {
-                    $errorMessage = 'Error updating features: ' . htmlspecialchars($e->getMessage());
-                }
-            }
-            break;
+    if ($result !== null) {
+        if ($result['success']) {
+            $successMessage = $result['message'];
+        } else {
+            $errorMessage = $result['message'];
+        }
     }
 }
 

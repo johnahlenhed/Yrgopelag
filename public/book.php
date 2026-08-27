@@ -9,6 +9,9 @@ require_once __DIR__ . '/../src/bookingRepository.php';
 require_once __DIR__ . '/../src/featureRepository.php';
 require_once __DIR__ . '/../src/roomRepository.php';
 require_once __DIR__ . '/../src/centralBankClient.php';
+require_once __DIR__ . '/../src/BookingRejected.php';
+require_once __DIR__ . '/../src/BookingPaymentPending.php';
+require_once __DIR__ . '/../src/BookingService.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
@@ -59,7 +62,7 @@ $roomType = array_key_first($selectedRooms);
 $arrival = DateTime::createFromFormat('Y-m-d H:i', $data[$roomType . '_checkin'] . ' 15:00');
 $departure = (clone $arrival)->modify('+20 hours');
 
-// Check availability
+// Check availability (a real race is still closed by the unique index BookingService::reserve() relies on)
 if (bookingRepository::isDateBooked($pdo, $roomType, $arrival)) {
     http_response_code(409);
     exit('The date is already booked.');
@@ -81,134 +84,52 @@ foreach ($featureRows as $feature) {
     }
 }
 
-// Check if returning customer for discount
-$isReturningCustomer = bookingRepository::isReturningCustomer($pdo, $data['name']);
-$previousBookings = bookingRepository::getBookingCountByGuest($pdo, $data['name']);
-$loyaltyDiscount = (int)getSetting($pdo, 'loyalty_discount');
-
-// Price calculation
-$featurePriceTotal = array_sum(array_column($featureRows, 'price'));
-$roomPrice = roomRepository::getRoomPriceByType($pdo, $roomType);
-$subtotal = ($roomPrice ?? 0) + $featurePriceTotal;
-
-// Apply discount if applicable
-$discountAmount = 0;
-if ($isReturningCustomer && $previousBookings >= 1) {
-    $discountAmount = (int)ceil($subtotal * ($loyaltyDiscount / 100));
-}
-
-$totalPrice = $subtotal - $discountAmount;
-
-// Validate transfer code with central bank
 $config = require __DIR__ . '/../config/centralbank.php';
 $cb = new CentralBankClient($config);
+$bookingService = new BookingService($pdo, $cb);
 
-// Handle payment method
-$usedTransferCodeService = false;
+$pricing = $bookingService->calculatePrice($roomType, $featureRows, $data['name']);
+$totalPrice = $pricing['totalPrice'];
 
-if ($data['payment_method'] === 'service') {
-    // TransferCode Service - create code for guest
-    if (empty($data['guest_api_key'])) {
-        http_response_code(400);
-        exit('API key is required for TransferCode Service.');
-    }
-
-    // Throttle Centralbank credential attempts from this session.
-    $attempts = $_SESSION['cb_service_attempts'] ?? [];
-    $attempts = array_filter($attempts, fn($t) => $t > time() - 60);
-    if (count($attempts) >= 10) {
-        http_response_code(429);
-        exit('Too many attempts. Please wait a minute and try again.');
-    }
-    $attempts[] = time();
-    $_SESSION['cb_service_attempts'] = $attempts;
-
-    try {
-        // Create transferCode using guest's API key
-        $transferCode = $cb->createTransferCodeForGuest(
-            $data['name'],
-            $data['guest_api_key'],
-            $totalPrice
-        );
-        
-        // Immediately unset the API key from memory
-        unset($data['guest_api_key']);
-        
-        $usedTransferCodeService = true;
-        
-    } catch (RuntimeException $e) {
-        error_log('Failed to create transfer code: ' . $e->getMessage());
-        http_response_code(400);
-        exit('Failed to create a transfer code. Please check your API key and try again.');
-    }
-    
-} else {
-    // Manual transferCode - validate it
-    if (empty($data['transfer_code'])) {
-        http_response_code(400);
-        exit('Transfer code is required.');
-    }
-    
-    $transferCode = $data['transfer_code'];
-    
-    try {
-        $cb->validateTransferCode($transferCode, $totalPrice);
-    } catch (RuntimeException $e) {
-        error_log('Invalid transfer code: ' . $e->getMessage());
-        http_response_code(400);
-        exit('That transfer code could not be validated. Please double-check it and try again.');
-    }
-}
-
-// Create booking in database
 try {
-    $bookingId = BookingRepository::create(
-        $pdo,
-        $data['name'],
-        $roomType,
-        $arrival,
-        $departure,
-        $totalPrice
-    );
-
-    // Attach features to booking
     $featureIds = array_column($featureRows, 'id');
-    FeatureRepository::attachToBooking($pdo, $bookingId, $featureIds);
-} catch (PDOException $e) {
-    http_response_code(500);
-    exit('Failed to create booking: ' . htmlspecialchars($e->getMessage()));
-}
+    $bookingId = $bookingService->reserve($data['name'], $roomType, $arrival, $departure, $totalPrice, $featureIds);
 
-// Deposit funds to hotel account
-try {
-    $cb->deposit($transferCode);
-} catch (RuntimeException $e) {
-    error_log('Deposit to hotel account failed: ' . $e->getMessage());
-    http_response_code(400);
-    exit('Payment failed. Please contact us if you believe this is a mistake.');
-}
+    if ($data['payment_method'] === 'service') {
+        // Throttle Centralbank credential attempts from this session.
+        $attempts = array_filter($_SESSION['cb_service_attempts'] ?? [], fn($t) => $t > time() - 60);
+        if (count($attempts) >= 10) {
+            bookingRepository::delete($pdo, $bookingId);
+            http_response_code(429);
+            exit('Too many attempts. Please wait a minute and try again.');
+        }
+        $attempts[] = time();
+        $_SESSION['cb_service_attempts'] = $attempts;
 
-// Send receipt to Central Bank
-$featuresUsed = array_map(
-    fn($f) => [
-        'activity' => $f['activity'],
-        'tier' => $f['tier'],
-    ],
-    $featureRows
-);
+        $transferCode = $bookingService->payViaService($bookingId, $data['name'], $data['guest_api_key'], $totalPrice);
+        unset($data['guest_api_key']); // Immediately drop it from memory now that it's been used.
+    } else {
+        $transferCode = $bookingService->payViaManualCode($bookingId, $data['transfer_code'], $totalPrice);
+    }
 
-$starRating = (int)getSetting($pdo, 'star_rating');
+    $bookingService->deposit($bookingId, $transferCode);
+    $bookingService->sendReceiptBestEffort($data['name'], $arrival, $departure, $featureRows, (int)getSetting($pdo, 'star_rating'));
+} catch (BookingPaymentPending $e) {
+    http_response_code(202);
+    require __DIR__ . '/../includes/header.php'; ?>
 
-try {
-    $cb->sendReceipt(
-        $data['name'],
-        $arrival->format('Y-m-d'),
-        $departure->format('Y-m-d'),
-        $featuresUsed,
-        $starRating
-    );
-} catch (RuntimeException $e) {
-    error_log('Failed to send receipt to Central Bank: ' . $e->getMessage());
+    <section class="booking-confirmation">
+        <h1>We've got your booking, but hit a snag</h1>
+        <p>Thank you, <?php echo htmlspecialchars($data['name']); ?>. Your date is reserved (reference #<?php echo $e->bookingId(); ?>),
+            but we couldn't confirm the deposit with Centralbank just now.</p>
+        <p>We'll follow up to resolve this -- please don't attempt to pay again for the same booking.</p>
+    </section>
+
+    <?php require __DIR__ . '/../includes/footer.php';
+    exit;
+} catch (BookingRejected $e) {
+    http_response_code($e->httpStatus());
+    exit(htmlspecialchars($e->getMessage()));
 }
 
 ?>
@@ -222,8 +143,8 @@ try {
     <p>Thank you, <?php echo htmlspecialchars($data['name']); ?>.</p>
     <p>Your booking has been confirmed.</p>
 
-    <?php if ($isReturningCustomer && $previousBookings >= 1): ?>
-        <p>You are a returning customer! A loyalty discount of <?php echo $loyaltyDiscount; ?>% has been applied to your booking.</p>
+    <?php if ($pricing['isReturningCustomer'] && $pricing['previousBookings'] >= 1): ?>
+        <p>You are a returning customer! A loyalty discount of <?php echo $pricing['loyaltyDiscount']; ?>% has been applied to your booking.</p>
     <?php endif; ?>
 
     <h3>Booking Details:</h3>
