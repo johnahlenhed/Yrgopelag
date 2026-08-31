@@ -16,7 +16,7 @@ final class roomRepository
         $prices = [];
         foreach ($rooms as $room) {
             $prices[$room['type']] = (int)$room['price'];
-    }
+        }
         return $prices;
     }
 

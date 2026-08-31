@@ -12,9 +12,10 @@ final class bookingRepository
         DateTime $departure,
         int $totalPrice
     ): int {
+        // Rows start 'pending': reserved, but not yet confirmed as paid.
         $stmt = $pdo->prepare(
-            'INSERT INTO bookings (guest_name, room_type, arrival_date, departure_date, total_price, created_at) 
-            VALUES (:guest_name, :room_type, :arrival_date, :departure_date, :total_price, CURRENT_TIMESTAMP)'
+            'INSERT INTO bookings (guest_name, room_type, arrival_date, departure_date, total_price, status, created_at)
+            VALUES (:guest_name, :room_type, :arrival_date, :departure_date, :total_price, \'pending\', CURRENT_TIMESTAMP)'
         );
 
         $stmt->execute([
@@ -25,6 +26,38 @@ final class bookingRepository
             ':total_price' => $totalPrice,
         ]);
         return (int)$pdo->lastInsertId();
+    }
+
+    // No money has moved for this booking yet, so it's safe to free the date.
+    public static function delete(PDO $pdo, int $bookingId): void
+    {
+        $stmt = $pdo->prepare('DELETE FROM bookings WHERE id = :id');
+        $stmt->execute([':id' => $bookingId]);
+    }
+
+    // Persists the transfer code as soon as money has moved, so it's never
+    // held only in a PHP variable that could be lost if the process dies
+    // before deposit() runs.
+    public static function setTransferCode(PDO $pdo, int $bookingId, string $transferCode): void
+    {
+        $stmt = $pdo->prepare('UPDATE bookings SET transfer_code = :transfer_code WHERE id = :id');
+        $stmt->execute([':transfer_code' => $transferCode, ':id' => $bookingId]);
+    }
+
+    public static function markConfirmed(PDO $pdo, int $bookingId): void
+    {
+        $stmt = $pdo->prepare("UPDATE bookings SET status = 'confirmed' WHERE id = :id");
+        $stmt->execute([':id' => $bookingId]);
+    }
+
+    // Money already moved (or was validated) but deposit() failed. Centralbank
+    // exposes no refund/reversal endpoint, so this can't be auto-compensated --
+    // the booking is kept, flagged for manual follow-up, with its transfer_code
+    // preserved so the deposit can be retried or the guest contacted.
+    public static function markPaymentFailed(PDO $pdo, int $bookingId): void
+    {
+        $stmt = $pdo->prepare("UPDATE bookings SET status = 'payment_failed' WHERE id = :id");
+        $stmt->execute([':id' => $bookingId]);
     }
 
     public static function getBookedDatesByRoom(PDO $pdo): array

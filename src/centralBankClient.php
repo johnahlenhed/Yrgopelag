@@ -15,15 +15,28 @@ final class CentralBankClient
         $this->apiKey = $config['api_key'];
     }
 
+    private const REDACTED_KEYS = ['api_key', 'transferCode'];
+
+    private static function redact(array $data): array
+    {
+        foreach (self::REDACTED_KEYS as $key) {
+            if (isset($data[$key])) {
+                $data[$key] = '***REDACTED***';
+            }
+        }
+
+        return $data;
+    }
+
     private function post(string $endpoint, array $payload): array
     {
         $url = $this->baseUrl . $endpoint;
         $maxRetries = 3;
         $retryDelay = 1;
-        
+
         for ($attempt = 1; $attempt <= $maxRetries; $attempt++) {
             error_log("POST to: " . $url . " (attempt {$attempt}/{$maxRetries})");
-            error_log("Payload: " . json_encode($payload, JSON_PRETTY_PRINT));
+            error_log("Payload: " . json_encode(self::redact($payload), JSON_PRETTY_PRINT));
 
             $ch = curl_init($url);
 
@@ -59,10 +72,13 @@ final class CentralBankClient
             $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             curl_close($ch);
 
-            error_log("Response status: " . $status);
-            error_log("Response body: " . $response);
-
             $data = json_decode($response, true);
+
+            error_log("Response status: " . $status);
+            error_log("Response body: " . json_encode(
+                is_array($data) ? self::redact($data) : ['raw' => $response],
+                JSON_PRETTY_PRINT
+            ));
 
             if ($status >= 400) {
                 throw new RuntimeException($data['error'] ?? 'Centralbank error', $status);

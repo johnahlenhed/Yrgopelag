@@ -5,6 +5,11 @@
     Require all denied
 </Files>
 
+# Block database/export files from being served directly, regardless of location
+<FilesMatch "\.(sqlite3?|db|sql|env)$">
+    Require all denied
+</FilesMatch>
+
 # Prevent directory browsing
 Options -Indexes
 
